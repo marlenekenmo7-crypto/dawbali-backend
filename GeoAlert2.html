@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GeoAlert — Plateforme IoT Agro-Pastorale</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0D1117;
+  --bg2:#161B22;
+  --bg3:#21262D;
+  --border:#30363D;
+  --text:#E6EDF3;
+  --text2:#8B949E;
+  --green:#2EA043;
+  --green-light:#3FB950;
+  --green-dim:#0D4429;
+  --orange:#E8873A;
+  --orange-dim:#3B1E06;
+  --red:#F85149;
+  --red-dim:#3D1414;
+  --blue:#58A6FF;
+  --blue-dim:#0D2149;
+  --yellow:#D29922;
+  --yellow-dim:#2B1A00;
+  --sidebar:220px;
+  --radius:10px;
+  --font:'DM Sans',sans-serif;
+  --mono:'Space Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;}
+
+/* ── LAYOUT ── */
+.shell{display:flex;height:100vh;}
+.sidebar{width:var(--sidebar);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{height:52px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;}
+.content{flex:1;overflow:auto;background:var(--bg);}
+
+/* ── SIDEBAR ── */
+.logo{padding:20px 16px 12px;border-bottom:1px solid var(--border);}
+.logo-title{font-size:18px;font-weight:700;color:var(--green-light);letter-spacing:-.3px;}
+.logo-sub{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4;}
+.logo-badge{display:inline-flex;align-items:center;gap:5px;background:var(--green-dim);color:var(--green-light);font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;margin-top:6px;letter-spacing:.5px;}
+.logo-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green-light);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.nav{padding:8px 0;flex:1;}
+.nav-group{margin-bottom:4px;}
+.nav-label{padding:8px 16px 4px;font-size:10px;font-weight:600;color:var(--text2);letter-spacing:1px;text-transform:uppercase;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 16px;cursor:pointer;color:var(--text2);transition:all .15s;font-size:13px;font-weight:500;position:relative;}
+.nav-item:hover{color:var(--text);background:var(--bg3);}
+.nav-item.active{color:var(--green-light);background:var(--green-dim);}
+.nav-item.active::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:3px;background:var(--green-light);border-radius:0 3px 3px 0;}
+.nav-icon{font-size:16px;width:20px;text-align:center;}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
+.nav-badge.warn{background:var(--orange);}
+
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);}
+.user-chip{display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg3);border-radius:8px;cursor:pointer;transition:background .15s;}
+.user-chip:hover{background:var(--border);}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#2EA043,#1a7a2e);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
+.user-info{flex:1;min-width:0;}
+.user-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.user-role{font-size:10px;color:var(--text2);}
+
+/* ── TOPBAR ── */
+.topbar-title{font-size:15px;font-weight:600;color:var(--text);}
+.topbar-path{font-size:12px;color:var(--text2);}
+.topbar-sep{color:var(--border);}
+.spacer{flex:1;}
+.topbar-btn{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:var(--font);font-size:12px;font-weight:500;transition:all .15s;}
+.topbar-btn:hover{border-color:var(--green);color:var(--green-light);}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+.status-text{font-size:12px;color:var(--green-light);font-weight:500;}
+
+/* ── PAGES ── */
+.page{display:none;padding:20px;}
+.page.active{display:block;}
+#map-page{padding:0;display:none;}
+#map-page.active{display:flex;flex-direction:column;height:100%;}
+
+/* ── GRID ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+
+/* ── CARD ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);}
+.card-title{font-size:13px;font-weight:600;color:var(--text);}
+.card-sub{font-size:11px;color:var(--text2);}
+.card-body{padding:16px;}
+.card-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+
+/* ── KPI ── */
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:8px;transition:border-color .2s;}
+.kpi:hover{border-color:var(--green);}
+.kpi-label{font-size:11px;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:.5px;}
+.kpi-value{font-size:28px;font-weight:700;font-family:var(--mono);line-height:1;}
+.kpi-delta{font-size:11px;display:flex;align-items:center;gap:4px;}
+.kpi-delta.up{color:var(--green-light);}
+.kpi-delta.down{color:var(--red);}
+.kpi-delta.warn{color:var(--orange);}
+.kpi-bar{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-top:4px;}
+.kpi-bar-fill{height:100%;border-radius:2px;transition:width 1s ease;}
+
+/* ── PILL ── */
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.pill::before{content:'';width:5px;height:5px;border-radius:50%;}
+.pill.ok{background:var(--green-dim);color:var(--green-light);}
+.pill.ok::before{background:var(--green-light);}
+.pill.warn{background:var(--orange-dim);color:var(--orange);}
+.pill.warn::before{background:var(--orange);}
+.pill.danger{background:var(--red-dim);color:var(--red);}
+.pill.danger::before{background:var(--red);}
+.pill.info{background:var(--blue-dim);color:var(--blue);}
+.pill.info::before{background:var(--blue);}
+.pill.off{background:var(--bg3);color:var(--text2);}
+.pill.off::before{background:var(--text2);}
+
+/* ── TABLE ── */
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);}
+.tbl td{padding:11px 12px;font-size:13px;color:var(--text);border-bottom:1px solid var(--border);}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--bg3);}
+.tbl .mono{font-family:var(--mono);font-size:12px;}
+
+/* ── ALERT ITEM ── */
+.alert-item{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;}
+.alert-item:hover{background:var(--bg3);}
+.alert-item:last-child{border-bottom:none;}
+.alert-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.alert-icon.danger{background:var(--red-dim);}
+.alert-icon.warn{background:var(--orange-dim);}
+.alert-icon.ok{background:var(--green-dim);}
+.alert-icon.info{background:var(--blue-dim);}
+.alert-body{flex:1;}
+.alert-title{font-size:13px;font-weight:600;color:var(--text);}
+.alert-desc{font-size:12px;color:var(--text2);margin-top:2px;line-height:1.4;}
+.alert-time{font-size:11px;color:var(--text2);font-family:var(--mono);}
+
+/* ── MAP ── */
+.map-toolbar{padding:12px 16px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.map-container{flex:1;position:relative;}
+#map{width:100%;height:100%;}
+.map-overlay{position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:8px;z-index:1000;}
+.map-panel{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;min-width:190px;}
+.map-panel-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+
+/* ── SECTION HEADER ── */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.section-title{font-size:15px;font-weight:700;color:var(--text);}
+.section-sub{font-size:12px;color:var(--text2);}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:600;transition:all .15s;}
+.btn-primary{background:var(--green);color:#fff;}
+.btn-primary:hover{background:var(--green-light);}
+.btn-secondary{background:var(--bg3);color:var(--text);border:1px solid var(--border);}
+.btn-secondary:hover{border-color:var(--green);color:var(--green-light);}
+.btn-danger{background:var(--red-dim);color:var(--red);border:1px solid var(--red-dim);}
+.btn-danger:hover{background:var(--red);color:#fff;}
+
+/* ── FORM ── */
+.form-row{display:flex;gap:12px;margin-bottom:12px;}
+.form-group{flex:1;display:flex;flex-direction:column;gap:4px;}
+.form-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;}
+.form-input{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color .15s;}
+.form-input:focus{border-color:var(--green);}
+
+/* ── PROGRESS ── */
+.progress{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;transition:width .8s ease;}
+
+/* ── STAT ROW ── */
+.stat-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);}
+.stat-row:last-child{border-bottom:none;}
+.stat-label{font-size:12px;color:var(--text2);}
+.stat-value{font-size:13px;font-weight:600;font-family:var(--mono);}
+
+/* ── TOAST ── */
+.toast-container{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:9999;}
+.toast{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;min-width:280px;max-width:360px;animation:slideIn .3s ease;box-shadow:0 8px 32px rgba(0,0,0,.4);}
+.toast.danger{border-color:var(--red);}
+.toast.warn{border-color:var(--orange);}
+.toast.ok{border-color:var(--green);}
+.toast.info{border-color:var(--blue);}
+.toast-icon{font-size:18px;flex-shrink:0;}
+.toast-body{flex:1;}
+.toast-title{font-size:13px;font-weight:600;}
+.toast-msg{font-size:12px;color:var(--text2);margin-top:2px;}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:2000;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:100%;max-width:440px;max-height:85vh;overflow-y:auto;}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-size:15px;font-weight:700;}
+.modal-close{cursor:pointer;color:var(--text2);font-size:20px;line-height:1;}
+.modal-close:hover{color:var(--text);}
+.modal-body{padding:20px;}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+
+/* ── DIVIDER ── */
+.divider{height:1px;background:var(--border);margin:16px 0;}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:40px 20px;color:var(--text2);}
+.empty-icon{font-size:40px;margin-bottom:12px;}
+.empty-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.empty-desc{font-size:12px;}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--text2);}
+
+/* ── LEAFLET ── */
+.leaflet-container{background:#0D1117;}
+.leaflet-popup-content-wrapper{background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:8px;}
+.leaflet-popup-tip{background:var(--bg2);}
+.leaflet-control-zoom{border:1px solid var(--border)!important;}
+.leaflet-control-zoom a{background:var(--bg2)!important;color:var(--text)!important;border-color:var(--border)!important;}
+.leaflet-control-zoom a:hover{background:var(--bg3)!important;}
+
+/* ── CHART WRAP ── */
+.chart-wrap{position:relative;padding:4px 0;}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ════════ SIDEBAR ════════ -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-title">🌾 GeoAlert</div>
+    <div class="logo-sub">Plateforme IoT Agro-Pastorale</div>
+    <span class="logo-badge">LIVE</span>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-group">
+      <div class="nav-label">Principal</div>
+      <div class="nav-item active" data-page="dashboard">
+        <span class="nav-icon">📊</span> Tableau de bord
+      </div>
+      <div class="nav-item" data-page="map">
+        <span class="nav-icon">🗺️</span> Carte en direct
+        <span class="nav-badge warn" id="map-badge">0</span>
+      </div>
+      <div class="nav-item" data-page="alerts">
+        <span class="nav-icon">🔔</span> Alertes
+        <span class="nav-badge" id="alert-badge">0</span>
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Gestion</div>
+      <div class="nav-item" data-page="herds">
+        <span class="nav-icon">🐂</span> Troupeaux
+      </div>
+      <div class="nav-item" data-page="devices">
+        <span class="nav-icon">📡</span> Dispositifs IoT
+      </div>
+      <div class="nav-item" data-page="zones">
+        <span class="nav-icon">🔶</span> Zones protégées
+      </div>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-chip" id="user-chip">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name">Non connecté</div>
+        <div class="user-role" id="user-role">Cliquez pour vous connecter</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ════════ MAIN ════════ -->
+<div class="main">
+  <div class="topbar">
+    <span id="topbar-title" class="topbar-title">Tableau de bord</span>
+    <span class="topbar-sep">/</span>
+    <span id="topbar-path" class="topbar-path">Vue générale</span>
+    <div class="spacer"></div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div class="status-dot"></div>
+      <span class="status-text">Système opérationnel</span>
+    </div>
+    <button class="topbar-btn" onclick="refreshAll()">↻ Actualiser</button>
+  </div>
+
+  <div class="content" id="content">
+
+    <!-- ════════ DASHBOARD ════════ -->
+    <div class="page active" id="dashboard">
+      <div class="grid-4" style="margin-bottom:16px;">
+        <div class="kpi">
+          <div class="kpi-label">Troupeaux suivis</div>
+          <div class="kpi-value" style="color:var(--green-light)" id="kpi-herds">—</div>
+          <div class="kpi-delta up" id="kpi-herds-delta">Chargement…</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" id="bar-herds" style="width:0%;background:var(--green)"></div></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Alertes actives</div>
+          <div class="kpi-value" style="color:var(--red)" id="kpi-alerts">—</div>
+          <div class="kpi-delta down" id="kpi-alerts-delta">Chargement…</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" id="bar-alerts" style="width:0%;background:var(--red)"></div></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Dispositifs actifs</div>
+          <div class="kpi-value" style="color:var(--blue)" id="kpi-devices">—</div>
+          <div class="kpi-delta warn" id="kpi-devices-delta">Chargement…</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" id="bar-devices" style="width:0%;background:var(--blue)"></div></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Zones</div>
+          <div class="kpi-value" style="color:var(--orange)" id="kpi-zones">—</div>
+          <div class="kpi-delta" id="kpi-zones-delta">Chargement…</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" id="bar-zones" style="width:0%;background:var(--orange)"></div></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Alertes récentes</div>
+            <button class="btn btn-secondary" onclick="showPage('alerts')">Tout voir →</button>
+          </div>
+          <div id="recent-alerts">
+            <div class="empty"><div class="empty-icon">🔔</div><div class="empty-title">Aucune alerte</div><div class="empty-desc">Les alertes apparaîtront ici</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">État des dispositifs</div>
+            <span class="pill ok" id="device-ok-count">— actifs</span>
+          </div>
+          <div id="device-list-dash">
+            <div class="empty"><div class="empty-icon">📡</div><div class="empty-title">Chargement…</div></div>
+          </div>
+          <div class="card-footer">
+            <span class="pill warn" id="device-offline-count">— hors ligne</span>
+            <button class="btn btn-secondary" onclick="showPage('devices')">Gérer →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ MAP ════════ -->
+    <div class="page" id="map-page">
+      <div class="map-toolbar">
+        <button class="btn btn-secondary" onclick="centerMap()">⊕ Recentrer</button>
+        <button class="btn btn-secondary" onclick="refreshAll()">↻ Actualiser positions</button>
+        <div class="spacer"></div>
+        <span style="font-size:12px;color:var(--text2);">Dernière MAJ : <span id="map-last-update" style="color:var(--text);font-family:var(--mono);">—</span></span>
+      </div>
+      <div class="map-container">
+        <div id="map"></div>
+        <div class="map-overlay">
+          <div class="map-panel">
+            <div class="map-panel-title">Légende</div>
+            <div style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--text2);">
+              <div style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#2EA043;border-radius:50%;display:inline-block;"></span> Troupeau normal</div>
+              <div style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#F85149;border-radius:50%;display:inline-block;"></span> Alerte active</div>
+              <div style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;background:#58A6FF;border-radius:50%;display:inline-block;"></span> Hors ligne</div>
+              <div style="margin-top:6px;display:flex;align-items:center;gap:6px;"><span style="width:12px;height:8px;background:rgba(248,81,73,.2);border:1px solid #F85149;display:inline-block;"></span> Zone agricole protégée</div>
+              <div style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:8px;background:rgba(46,160,67,.15);border:1px solid #2EA043;display:inline-block;"></span> Couloir de transhumance</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ ALERTS ════════ -->
+    <div class="page" id="alerts">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Alertes & Notifications</div>
+          <div class="section-sub">Historique complet des événements système</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select class="form-input" style="width:140px;padding:6px 10px;" id="alert-filter" onchange="filterAlerts()">
+            <option value="">Toutes</option>
+            <option value="ENTREE_ZONE">Intrusions</option>
+            <option value="SORTIE_ZONE">Sorties</option>
+            <option value="BATTERIE">Batterie</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header">
+          <div class="card-title">Alertes actives</div>
+          <span class="pill danger" id="alerts-active-count">0 en cours</span>
+        </div>
+        <div id="alerts-active">
+          <div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Aucune alerte active</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Historique des alertes</div>
+        </div>
+        <table class="tbl">
+          <thead><tr>
+            <th>Horodatage</th><th>Type</th><th>Message</th><th>Statut</th>
+          </tr></thead>
+          <tbody id="alerts-list"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════ HERDS ════════ -->
+    <div class="page" id="herds">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Gestion des Troupeaux</div>
+          <div class="section-sub" id="herds-sub">Chargement…</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Liste complète</div></div>
+        <table class="tbl">
+          <thead><tr>
+            <th>ID</th><th>Nom</th><th>Éleveur</th><th>Têtes de bétail</th><th>Statut</th>
+          </tr></thead>
+          <tbody id="herds-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════ DEVICES ════════ -->
+    <div class="page" id="devices">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Dispositifs IoT</div>
+          <div class="section-sub">Colliers GPS/GSM</div>
+        </div>
+      </div>
+
+      <div class="grid-4" style="margin-bottom:16px;">
+        <div class="kpi"><div class="kpi-label">Total dispositifs</div><div class="kpi-value" style="color:var(--text)" id="dev-total">—</div></div>
+        <div class="kpi"><div class="kpi-label">En ligne</div><div class="kpi-value" style="color:var(--green-light)" id="dev-online">—</div></div>
+        <div class="kpi"><div class="kpi-label">Hors ligne</div><div class="kpi-value" style="color:var(--red)" id="dev-offline">—</div></div>
+        <div class="kpi"><div class="kpi-label">Batterie critique</div><div class="kpi-value" style="color:var(--orange)" id="dev-critical">—</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Inventaire des colliers IoT</div></div>
+        <table class="tbl">
+          <thead><tr>
+            <th>ID Collier</th><th>Troupeau</th><th>Batterie</th><th>Statut</th>
+          </tr></thead>
+          <tbody id="devices-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════ ZONES ════════ -->
+    <div class="page" id="zones">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Zones Protégées & Géorepérage</div>
+          <div class="section-sub">Définition des zones agricoles et couloirs de transhumance</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:16px;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Zones agricoles protégées</div>
+            <span class="pill danger" id="zones-agri-count">0 zones</span>
+          </div>
+          <div id="zones-agricultural">
+            <div class="empty"><div class="empty-icon">🔶</div><div class="empty-title">Chargement…</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Couloirs de transhumance</div>
+            <span class="pill ok" id="zones-trans-count">0 couloirs</span>
+          </div>
+          <div id="zones-transhumance">
+            <div class="empty"><div class="empty-icon">🛤️</div><div class="empty-title">Chargement…</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Toutes les zones</div></div>
+        <table class="tbl">
+          <thead><tr><th>Nom</th><th>Type</th><th>Rayon alerte</th></tr></thead>
+          <tbody id="zones-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ════════ TOAST ════════ -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ════════ LOGIN MODAL ════════ -->
+<div class="modal-overlay" id="login-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🔐 Connexion GeoAlert</span>
+      <span class="modal-close" onclick="closeLoginModal()">×</span>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Téléphone</label>
+          <input class="form-input" id="login-phone" placeholder="699887766" type="tel"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <input class="form-input" id="login-password" type="password" placeholder="••••••"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Rôle</label>
+          <select class="form-input" id="login-role">
+            <option value="eleveur">Éleveur</option>
+            <option value="admin">Administrateur</option>
+          </select>
+        </div>
+      </div>
+      <div id="login-error" style="color:var(--red);font-size:12px;display:none;margin-top:4px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeLoginModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="submitLogin()" id="btn-login">Se connecter</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+//  CONFIGURATION
+// ════════════════════════════════════════
+const API_BASE = window.DAWBALI_API_URL || 'https://dawbali-backend.onrender.com/api';
+let authToken = null;
+let currentUser = null;
+let map = null;
+let markers = [];
+let allAlerts = [];
+
+// ════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════
+function showToast(type, title, msg, duration = 4000) {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  const icons = { ok: '✅', warn: '⚠️', danger: '🚨', info: 'ℹ️' };
+  el.innerHTML = `<span class="toast-icon">${icons[type] || 'ℹ️'}</span><div class="toast-body"><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div><span style="cursor:pointer;color:var(--text2);margin-left:8px;" onclick="this.parentElement.remove()">×</span>`;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(100%)';
+    el.style.transition = 'all .3s';
+    setTimeout(() => el.remove(), 300);
+  }, duration);
+}
+
+// ════════════════════════════════════════
+//  API CALL  ← identique à GeoAlert2
+// ════════════════════════════════════════
+async function apiCall(endpoint, method = 'GET', body = null) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+  const options = { method, headers };
+  if (body) options.body = JSON.stringify(body);
+  try {
+    const res = await fetch(`${API_BASE}${endpoint}`, options);
+    const data = await res.json();
+    return { ok: res.ok, data };
+  } catch (error) {
+    console.error('API Error:', error);
+    return { ok: false, data: { error: error.message } };
+  }
+}
+
+// ════════════════════════════════════════
+//  AUTHENTIFICATION  ← identique à GeoAlert2
+// ════════════════════════════════════════
+async function login(telephone, password, role) {
+  if (!telephone || !password) {
+    showToast('warn', 'Champs vides', 'Veuillez saisir téléphone et mot de passe');
+    return false;
+  }
+  const endpoint = role === 'eleveur' ? '/auth/login/eleveur' : '/auth/login/admin';
+  const { ok, data } = await apiCall(endpoint, 'POST', { telephone, mot_de_passe: password });
+  if (ok && data.token) {
+    authToken = data.token;
+    currentUser = data.user;
+    localStorage.setItem('token', authToken);
+    localStorage.setItem('user', JSON.stringify(currentUser));
+    updateUserUI();
+    closeLoginModal();
+    refreshAll();
+    showToast('ok', 'Connexion réussie', `Bienvenue ${currentUser.nom} 👋`);
+    return true;
+  }
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = data.error || 'Identifiants incorrects';
+  errEl.style.display = 'block';
+  showToast('danger', 'Erreur de connexion', data.error || 'Identifiants incorrects');
+  return false;
+}
+
+function logout() {
+  authToken = null;
+  currentUser = null;
+  localStorage.clear();
+  document.getElementById('user-name').textContent = 'Non connecté';
+  document.getElementById('user-avatar').textContent = '?';
+  document.getElementById('user-role').textContent = 'Cliquez pour vous connecter';
+  showToast('info', 'Déconnexion', 'Vous êtes déconnecté');
+  setTimeout(() => showLoginModal(), 400);
+}
+
+function updateUserUI() {
+  if (!currentUser) return;
+  document.getElementById('user-name').textContent = currentUser.nom;
+  document.getElementById('user-avatar').textContent = currentUser.nom.substring(0, 2).toUpperCase();
+  document.getElementById('user-role').textContent = currentUser.role === 'admin' ? 'Administrateur' : 'Éleveur';
+}
+
+// ════════════════════════════════════════
+//  MODALES
+// ════════════════════════════════════════
+function showLoginModal() {
+  document.getElementById('login-modal').classList.add('open');
+}
+function closeLoginModal() {
+  document.getElementById('login-modal').classList.remove('open');
+  document.getElementById('login-error').style.display = 'none';
+}
+async function submitLogin() {
+  const btn = document.getElementById('btn-login');
+  btn.textContent = 'Connexion…';
+  btn.disabled = true;
+  await login(
+    document.getElementById('login-phone').value,
+    document.getElementById('login-password').value,
+    document.getElementById('login-role').value
+  );
+  btn.textContent = 'Se connecter';
+  btn.disabled = false;
+}
+
+// ════════════════════════════════════════
+//  DONNÉES  ← mêmes appels API que GeoAlert2
+// ════════════════════════════════════════
+async function refreshAll() {
+  if (!authToken) return;
+  await Promise.all([fetchHerds(), fetchDevices(), fetchZones(), fetchAlerts()]);
+}
+
+async function fetchHerds() {
+  const { ok, data } = await apiCall('/troupeaux');
+  if (ok && data.data) {
+    const total = data.data.length;
+    document.getElementById('kpi-herds').textContent = total;
+    document.getElementById('kpi-herds-delta').textContent = `${total} troupeaux enregistrés`;
+    document.getElementById('bar-herds').style.width = Math.min(total * 8, 100) + '%';
+    document.getElementById('herds-sub').textContent = `${total} troupeaux enregistrés`;
+
+    const tbody = document.getElementById('herds-table');
+    if (tbody) {
+      tbody.innerHTML = data.data.map(h => `
+        <tr>
+          <td class="mono">${h.id_troupeau}</td>
+          <td style="font-weight:600;">${h.nom_troupeau}</td>
+          <td>${h.id_eleveur}</td>
+          <td>${h.taille || 0}</td>
+          <td><span class="pill ok">Actif</span></td>
+        </tr>
+      `).join('');
+    }
+
+    // Dashboard device list
+    const dashList = document.getElementById('device-list-dash');
+    if (dashList) {
+      dashList.innerHTML = data.data.slice(0, 5).map(h => `
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:16px;">🐂</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:600;">${h.nom_troupeau}</div>
+            <div style="font-size:11px;color:var(--text2);">ID: ${h.id_troupeau} · ${h.taille || 0} têtes</div>
+          </div>
+          <span class="pill ok">Actif</span>
+        </div>
+      `).join('');
+      document.getElementById('device-ok-count').textContent = total + ' actifs';
+    }
+  }
+}
+
+async function fetchDevices() {
+  const { ok, data } = await apiCall('/colliers');
+  if (ok && data.data) {
+    const total = data.data.length;
+    const online = data.data.filter(d => d.statut === 'actif').length;
+    const offline = total - online;
+    const critical = data.data.filter(d => (d.niveau_batterie || 0) < 20).length;
+
+    document.getElementById('kpi-devices').textContent = online;
+    document.getElementById('kpi-devices-delta').textContent = `⚠ ${offline} hors ligne`;
+    document.getElementById('bar-devices').style.width = (online / Math.max(total, 1) * 100) + '%';
+
+    document.getElementById('dev-total').textContent = total;
+    document.getElementById('dev-online').textContent = online;
+    document.getElementById('dev-offline').textContent = offline;
+    document.getElementById('dev-critical').textContent = critical;
+    document.getElementById('device-offline-count').textContent = offline + ' hors ligne';
+
+    const tbody = document.getElementById('devices-table');
+    if (tbody) {
+      tbody.innerHTML = data.data.map(d => {
+        const bat = d.niveau_batterie || 0;
+        const batColor = bat > 50 ? 'var(--green-light)' : bat > 20 ? 'var(--orange)' : 'var(--red)';
+        return `<tr>
+          <td class="mono">${d.id_collier}</td>
+          <td>${d.nom_troupeau || '—'}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="progress" style="width:60px;"><div class="progress-fill" style="width:${bat}%;background:${batColor};"></div></div>
+              <span style="font-size:11px;font-family:var(--mono);color:${batColor}">${bat}%</span>
+            </div>
+          </td>
+          <td><span class="pill ${d.statut === 'actif' ? 'ok' : 'off'}">${d.statut || 'inactif'}</span></td>
+        </tr>`;
+      }).join('');
+    }
+  }
+}
+
+async function fetchZones() {
+  const { ok, data } = await apiCall('/zones');
+  if (ok && data.data) {
+    const total = data.data.length;
+    document.getElementById('kpi-zones').textContent = total;
+    document.getElementById('kpi-zones-delta').textContent = `${total} zones configurées`;
+    document.getElementById('bar-zones').style.width = Math.min(total * 12, 100) + '%';
+
+    const agri = data.data.filter(z => z.type_zone !== 'transhumance');
+    const trans = data.data.filter(z => z.type_zone === 'transhumance');
+
+    document.getElementById('zones-agri-count').textContent = agri.length + ' zones';
+    document.getElementById('zones-trans-count').textContent = trans.length + ' couloirs';
+
+    const renderZoneList = (zones, containerId) => {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      if (!zones.length) {
+        el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Aucune zone</div></div>';
+        return;
+      }
+      el.innerHTML = zones.map(z => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <div>
+            <div style="font-size:13px;font-weight:600;">${z.nom_zone}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px;">${z.type_zone} · Rayon ${z.rayon_alerte_approche || 500} m</div>
+          </div>
+          <span class="pill ${z.type_zone === 'transhumance' ? 'ok' : 'danger'}">${z.type_zone}</span>
+        </div>
+      `).join('');
+    };
+    renderZoneList(agri, 'zones-agricultural');
+    renderZoneList(trans, 'zones-transhumance');
+
+    const tbody = document.getElementById('zones-table');
+    if (tbody) {
+      tbody.innerHTML = data.data.map(z => `
+        <tr>
+          <td style="font-weight:600;">${z.nom_zone}</td>
+          <td><span class="pill ${z.type_zone === 'transhumance' ? 'ok' : 'danger'}">${z.type_zone}</span></td>
+          <td class="mono">${z.rayon_alerte_approche || 500} m</td>
+        </tr>
+      `).join('');
+    }
+  }
+}
+
+async function fetchAlerts() {
+  const { ok, data } = await apiCall('/alertes');
+  if (ok && data.data) {
+    allAlerts = data.data;
+    renderAlerts(allAlerts);
+  }
+}
+
+function renderAlerts(alerts) {
+  const pending = alerts.filter(a => a.status === 'pending');
+  document.getElementById('kpi-alerts').textContent = pending.length;
+  document.getElementById('kpi-alerts-delta').textContent = pending.length > 0 ? `▲ ${pending.length} non résolues` : '✓ Aucune alerte';
+  document.getElementById('bar-alerts').style.width = Math.min(pending.length * 14, 100) + '%';
+  document.getElementById('alert-badge').textContent = pending.length;
+  document.getElementById('alerts-active-count').textContent = pending.length + ' en cours';
+
+  const iconMap = { ENTREE_ZONE: { icon: '🚨', cls: 'danger' }, SORTIE_ZONE: { icon: '⚠️', cls: 'warn' }, BATTERIE: { icon: '🔋', cls: 'warn' } };
+
+  const makeAlertItem = (a) => {
+    const t = iconMap[a.type_alerte] || { icon: '📢', cls: 'info' };
+    const d = a.created_at ? new Date(a.created_at).toLocaleString('fr-FR') : '—';
+    return `<div class="alert-item">
+      <div class="alert-icon ${t.cls}">${t.icon}</div>
+      <div class="alert-body">
+        <div class="alert-title">${a.type_alerte}</div>
+        <div class="alert-desc">${a.message || 'Alerte générée par le système'}</div>
+        <div class="alert-time">${d}</div>
+      </div>
+      <span class="pill ${a.status === 'pending' ? 'danger' : 'ok'}">${a.status === 'pending' ? 'En cours' : 'Résolu'}</span>
+    </div>`;
+  };
+
+  // Active alerts panel
+  const activeEl = document.getElementById('alerts-active');
+  if (activeEl) {
+    activeEl.innerHTML = pending.length
+      ? pending.map(makeAlertItem).join('')
+      : '<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Aucune alerte active</div></div>';
+  }
+
+  // Recent alerts on dashboard
+  const recentEl = document.getElementById('recent-alerts');
+  if (recentEl) {
+    recentEl.innerHTML = alerts.slice(0, 5).length
+      ? alerts.slice(0, 5).map(makeAlertItem).join('')
+      : '<div class="empty"><div class="empty-icon">🔔</div><div class="empty-title">Aucune alerte</div></div>';
+  }
+
+  // History table
+  const tbody = document.getElementById('alerts-list');
+  if (tbody) {
+    tbody.innerHTML = alerts.map(a => {
+      const t = iconMap[a.type_alerte] || { icon: '📢', cls: 'info' };
+      const d = a.created_at ? new Date(a.created_at).toLocaleString('fr-FR') : '—';
+      return `<tr>
+        <td class="mono" style="font-size:11px;">${d}</td>
+        <td>${t.icon} ${a.type_alerte}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.message || '—'}</td>
+        <td><span class="pill ${a.status === 'pending' ? 'danger' : 'ok'}">${a.status === 'pending' ? 'En cours' : 'Résolu'}</span></td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+function filterAlerts() {
+  const val = document.getElementById('alert-filter').value;
+  const filtered = val ? allAlerts.filter(a => a.type_alerte === val) : allAlerts;
+  renderAlerts(filtered);
+}
+
+// ════════════════════════════════════════
+//  CARTE  ← même logique API que GeoAlert2
+// ════════════════════════════════════════
+async function initMap() {
+  const mapContainer = document.getElementById('map');
+  if (!mapContainer || map) return;
+  map = L.map('map').setView([7.5, 13.8], 7);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© CartoDB'
+  }).addTo(map);
+  await updateMapPositions();
+  setInterval(updateMapPositions, 30000);
+}
+
+async function updateMapPositions() {
+  if (!map || !authToken) return;
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+
+  const { data } = await apiCall('/troupeaux');
+  if (data && data.data) {
+    for (const herd of data.data.slice(0, 30)) {
+      const pos = await apiCall(`/iot/position/${herd.id_troupeau}`);
+      if (pos.data && pos.data.data && pos.data.data.latitude) {
+        const icon = L.divIcon({
+          className: '',
+          html: `<div style="width:14px;height:14px;border-radius:50%;background:#2EA043;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5);"></div>`,
+          iconSize: [14, 14], iconAnchor: [7, 7]
+        });
+        const marker = L.marker([pos.data.data.latitude, pos.data.data.longitude], { icon })
+          .bindPopup(`<b>${herd.nom_troupeau}</b><br><span style="font-size:11px;color:#8B949E;">Lat: ${pos.data.data.latitude.toFixed(4)} · Lon: ${pos.data.data.longitude.toFixed(4)}</span>`)
+          .addTo(map);
+        markers.push(marker);
+      }
+    }
+  }
+  document.getElementById('map-last-update').textContent = new Date().toLocaleTimeString('fr-FR');
+}
+
+function centerMap() {
+  if (map) map.setView([7.5, 13.8], 7);
+}
+
+// ════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════
+const PAGE_META = {
+  dashboard: { title: 'Tableau de bord', path: 'Vue générale', id: 'dashboard' },
+  map:       { title: 'Carte en direct', path: 'Suivi GPS temps réel', id: 'map-page' },
+  alerts:    { title: 'Alertes', path: 'Historique des événements', id: 'alerts' },
+  herds:     { title: 'Troupeaux', path: 'Gestion', id: 'herds' },
+  devices:   { title: 'Dispositifs IoT', path: 'Colliers GPS/GSM', id: 'devices' },
+  zones:     { title: 'Zones protégées', path: 'Géorepérage', id: 'zones' },
+};
+
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  const meta = PAGE_META[pageId];
+  if (!meta) return;
+
+  document.getElementById(meta.id).classList.add('active');
+  document.querySelector(`[data-page="${pageId}"]`).classList.add('active');
+  document.getElementById('topbar-title').textContent = meta.title;
+  document.getElementById('topbar-path').textContent = meta.path;
+
+  if (pageId === 'map') {
+    setTimeout(initMap, 100);
+    if (map) setTimeout(() => map.invalidateSize(), 150);
+  }
+}
+
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+document.querySelectorAll('.nav-item').forEach(nav => {
+  nav.addEventListener('click', () => showPage(nav.dataset.page));
+});
+
+document.getElementById('user-chip').addEventListener('click', () => {
+  if (authToken) {
+    if (confirm('Voulez-vous vous déconnecter ?')) logout();
+  } else {
+    showLoginModal();
+  }
+});
+
+document.getElementById('login-modal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('login-modal')) closeLoginModal();
+});
+
+document.getElementById('login-password').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') submitLogin();
+});
+
+// Restore session
+const savedToken = localStorage.getItem('token');
+const savedUser  = localStorage.getItem('user');
+if (savedToken && savedUser) {
+  authToken = savedToken;
+  currentUser = JSON.parse(savedUser);
+  updateUserUI();
+  refreshAll();
+  setTimeout(() => showToast('ok', '🌾 GeoAlert — Système actif', `Session restaurée · Bienvenue ${currentUser.nom}`), 600);
+} else {
+  setTimeout(() => showLoginModal(), 300);
+}
+</script>
+</body>
+</html>
