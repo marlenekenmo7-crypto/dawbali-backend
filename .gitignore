@@ -1,0 +1,6 @@
+backend/node_modules/
+backend/.env
+backend/process.env
+backend/eleveur.json
+.DS_Store
+*.log
