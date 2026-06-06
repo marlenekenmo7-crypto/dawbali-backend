@@ -49,7 +49,7 @@ function editEleveur(id) {
   const e = S.allEleveurs.find(x => x.id_eleveur === id);
   if (!e) return;
   document.getElementById('eleveur-id').value        = e.id_eleveur;
-  document.getElementById('eleveur-nom').value       = e.nom       || '';
+  document.getElementById('eleveur-nom').value       = e.nom_eleveur || '';
   document.getElementById('eleveur-tel').value       = e.telephone || '';
   document.getElementById('eleveur-localite').value  = e.localite  || '';
   document.getElementById('eleveur-error').style.display = 'none';
@@ -78,7 +78,7 @@ async function saveEleveur() {
   btn.textContent = 'Enregistrement…';
   btn.disabled    = true;
 
-  const payload   = { nom, telephone, localite };
+  const payload   = { nom_eleveur: nom, telephone, localite };
   const { ok, data } = id
     ? await api(`/eleveurs/${id}`, 'PUT',  payload)
     : await api('/eleveurs',       'POST', payload);

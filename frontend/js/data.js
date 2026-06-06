@@ -116,9 +116,9 @@ function renderEleveursTable() {
       <td>
         <div style="display:flex;align-items:center;gap:8px;">
           <div style="width:28px;height:28px;border-radius:50%;background:${e.couleur || 'var(--gold)'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">
-            ${(e.nom || '?').substring(0, 2).toUpperCase()}
+            ${(e.nom_eleveur || '?').substring(0, 2).toUpperCase()}
           </div>
-          <span style="font-weight:600;">${e.nom || '—'}</span>
+          <span style="font-weight:600;">${e.nom_eleveur || '—'}</span>
         </div>
       </td>
       <td class="mono">${e.telephone || '—'}</td>
@@ -127,7 +127,7 @@ function renderEleveursTable() {
       <td>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button class="btn btn-secondary btn-sm" onclick="editEleveur(${e.id_eleveur})">Modifier</button>
-          <button class="btn btn-danger btn-sm"    onclick="deleteEleveur(${e.id_eleveur},'${(e.nom || '').replace(/'/g, "\\'")}')">Suppr.</button>
+          <button class="btn btn-danger btn-sm"    onclick="deleteEleveur(${e.id_eleveur},'${(e.nom_eleveur || '').replace(/'/g, "\\'")}')">Suppr.</button>
         </div>
       </td>
     </tr>`).join('');
@@ -142,7 +142,7 @@ function renderHerdsTable() {
   }
   tbody.innerHTML = S.allHerds.map(h => {
     const elev   = S.eleveurMap[h.id_eleveur];
-    const elevNom = elev ? elev.nom : `#${h.id_eleveur}`;
+    const elevNom = elev ? elev.nom_eleveur : `#${h.id_eleveur}`;
     const collar  = S.allDevices.find(d => d.id_troupeau === h.id_troupeau);
     const collarBadge = collar
       ? `<span class="pill ${collar.statut === 'actif' ? 'ok' : 'off'}">${collar.id_collier}</span>`
