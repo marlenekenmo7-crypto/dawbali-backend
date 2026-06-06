@@ -67,3 +67,25 @@ function setWidth(id, pct) {
 function loading(html = '') {
   return html || '<div class="loading"><div class="spinner"></div> Chargement…</div>';
 }
+
+/* ════════════════════════════════════════
+   THÈME — bascule clair / sombre
+   ════════════════════════════════════════ */
+function toggleTheme() {
+  const html = document.documentElement;
+  const isLight = html.getAttribute('data-theme') === 'light';
+  const next = isLight ? 'dark' : 'light';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.textContent = next === 'light' ? '☀' : '🌙';
+}
+
+(function applyTheme() {
+  const saved = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('theme-toggle-btn');
+    if (btn) btn.textContent = saved === 'light' ? '☀' : '🌙';
+  });
+})();

@@ -1,9 +1,14 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="dark">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dawbali — Plateforme IoT Agro-Pastorale</title>
+
+  <!-- Restauration thème (avant le CSS pour éviter le flash) -->
+  <script>
+    (function(){ var t=localStorage.getItem('theme')||'dark'; document.documentElement.setAttribute('data-theme',t); })();
+  </script>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -118,6 +123,7 @@
         <div class="sys-dot" id="sys-dot"></div>
         <span class="sys-text" id="sys-text">Opérationnel</span>
       </div>
+      <button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="Changer le thème">☀</button>
       <button class="topbar-btn" onclick="refreshAll()">↻ <span>Actualiser</span></button>
     </div>
 
