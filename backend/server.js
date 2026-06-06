@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+const initDb = require('./config/initDb');
+
 // Importer les routes
 const troupeauRoutes = require('./routes/troupeauRoutes');
 const zoneRoutes = require('./routes/zoneRoutes');
@@ -76,6 +78,7 @@ app.get('/health', (req, res) => {
 
 
 // Démarrer le serveur
+initDb().then(() => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`
   ═══════════════════════════════════════════════════════
@@ -85,4 +88,5 @@ app.listen(PORT, '0.0.0.0', () => {
   📡 API: http://0.0.0.0:${PORT}/api
   ═══════════════════════════════════════════════════════
   `);
+});
 });
