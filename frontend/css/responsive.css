@@ -49,13 +49,12 @@
     top: 0; left: -240px;
     width: 240px !important;
     height: 100vh;
-    z-index: 500;
+    z-index: 800;
     transition: left .25s cubic-bezier(.4,0,.2,1);
     overflow-y: auto;
-    /* Couche GPU isolée : évite le flou causé par backdrop-filter sur Android */
-    transform: translateZ(0);
-    will-change: left;
-    -webkit-transform: translateZ(0);
+    /* z-index 800 >> overlay (300) : évite que l'overlay assombrit la sidebar */
+    /* Pas de will-change ni de transform forcé : cause des bugs de compositing sur Android */
+    -webkit-overflow-scrolling: touch;
   }
   .sidebar.mobile-open { left: 0; }
 

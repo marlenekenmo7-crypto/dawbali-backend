@@ -160,8 +160,8 @@ html, body {
 /* ══ OVERLAY MOBILE ════════════════════════════════════ */
 .sidebar-overlay {
   display:none; position:fixed; inset:0;
-  background:rgba(0,0,0,.62); z-index:499;
-  /* Pas de backdrop-filter ici : sur Android il rend la sidebar floue */
+  background:rgba(0,0,0,.55); z-index:300;
+  /* z-index bas (300) : la sidebar mobile est à 800, toujours au-dessus */
 }
 .sidebar-overlay.visible { display:block; }
 

@@ -30,7 +30,11 @@ const zoneController = {
   // Récupérer toutes les zones
   async getAllZones(req, res) {
     try {
-      const result = await pool.query('SELECT id_zone, nom_zone, type_zone, description_zone, rayon_alerte_approche, actif FROM zones ORDER BY id_zone');
+      const result = await pool.query(
+        `SELECT id_zone, nom_zone, type_zone, description_zone, rayon_alerte_approche, actif,
+                ST_AsGeoJSON(forme_geographique)::json as geometrie
+         FROM zones ORDER BY id_zone`
+      );
       res.json({ success: true, data: result.rows });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
