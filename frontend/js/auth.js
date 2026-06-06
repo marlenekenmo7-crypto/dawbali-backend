@@ -34,6 +34,7 @@ function logout() {
   document.getElementById('user-avatar').textContent = '?';
   document.getElementById('user-role').textContent   = 'Cliquez pour vous connecter';
   document.getElementById('logout-icon').style.display = 'none';
+  document.documentElement.removeAttribute('data-role');
   showToast('info', 'Déconnexion', 'Session terminée');
   setTimeout(showLoginModal, 400);
 }
@@ -42,8 +43,18 @@ function updateUserUI() {
   if (!S.user) return;
   document.getElementById('user-name').textContent   = S.user.nom;
   document.getElementById('user-avatar').textContent = S.user.nom.substring(0, 2).toUpperCase();
-  document.getElementById('user-role').textContent   = S.user.role === 'admin' ? 'Administrateur' : 'Éleveur';
+  document.getElementById('user-role').textContent   = S.user.role === 'administrateur' ? 'Administrateur' : 'Éleveur';
   document.getElementById('logout-icon').style.display = 'block';
+  applyRoleUI(S.user.role);
+}
+
+function applyRoleUI(role) {
+  const isAdmin = role === 'administrateur';
+  document.documentElement.setAttribute('data-role', isAdmin ? 'admin' : 'eleveur');
+  if (!isAdmin) {
+    const activeNav = document.querySelector('.nav-item.active');
+    if (activeNav && activeNav.dataset.page === 'eleveurs') showPage('dashboard');
+  }
 }
 
 function showLoginModal()  { document.getElementById('login-modal').classList.add('open'); }

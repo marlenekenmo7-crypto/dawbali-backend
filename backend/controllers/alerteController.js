@@ -4,19 +4,27 @@ const alerteController = {
   // Récupérer toutes les alertes
   async getAllAlertes(req, res) {
     try {
-      const result = await pool.query(`
-        SELECT a.*, 
-               t.nom_troupeau, 
-               z.nom_zone, 
-               z.type_zone,
-               e.nom_eleveur,
-               e.telephone
-        FROM alerte a
-        LEFT JOIN troupeau t ON a.id_troupeau = t.id_troupeau
-        LEFT JOIN zones z ON a.id_zone = z.id_zone
-        LEFT JOIN eleveur e ON t.id_eleveur = e.id_eleveur
-        ORDER BY a.created_at DESC
-      `);
+      let result;
+      if (req.user.role === 'eleveur') {
+        result = await pool.query(`
+          SELECT a.*, t.nom_troupeau, z.nom_zone, z.type_zone, e.nom_eleveur, e.telephone
+          FROM alerte a
+          LEFT JOIN troupeau t ON a.id_troupeau = t.id_troupeau
+          LEFT JOIN zones z ON a.id_zone = z.id_zone
+          LEFT JOIN eleveur e ON t.id_eleveur = e.id_eleveur
+          WHERE t.id_eleveur = $1
+          ORDER BY a.created_at DESC
+        `, [req.user.id]);
+      } else {
+        result = await pool.query(`
+          SELECT a.*, t.nom_troupeau, z.nom_zone, z.type_zone, e.nom_eleveur, e.telephone
+          FROM alerte a
+          LEFT JOIN troupeau t ON a.id_troupeau = t.id_troupeau
+          LEFT JOIN zones z ON a.id_zone = z.id_zone
+          LEFT JOIN eleveur e ON t.id_eleveur = e.id_eleveur
+          ORDER BY a.created_at DESC
+        `);
+      }
       res.json({ success: true, count: result.rows.length, data: result.rows });
     } catch (error) {
       console.error('Erreur getAllAlertes:', error);

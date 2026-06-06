@@ -196,12 +196,17 @@ async function submitRegister() {
 }
 
 // ── TROUPEAUX CRUD ────────────────────
+function _setEleveurRowVisibility() {
+  const row = document.getElementById('troupeau-eleveur-row');
+  if (row) row.style.display = S.user?.role === 'administrateur' ? '' : 'none';
+}
 function openTroupeauModal() {
   document.getElementById('troupeau-id').value    = '';
   document.getElementById('troupeau-nom').value   = '';
   document.getElementById('troupeau-taille').value= '';
   document.getElementById('troupeau-error').style.display = 'none';
   setEl('troupeau-modal-title', 'Nouveau troupeau');
+  _setEleveurRowVisibility();
   _populateEleveurSelect();
   document.getElementById('troupeau-modal').classList.add('open');
 }
@@ -213,6 +218,7 @@ function editTroupeau(id) {
   document.getElementById('troupeau-taille').value = t.taille || '';
   document.getElementById('troupeau-error').style.display = 'none';
   setEl('troupeau-modal-title', 'Modifier troupeau');
+  _setEleveurRowVisibility();
   _populateEleveurSelect(t.id_eleveur);
   document.getElementById('troupeau-modal').classList.add('open');
 }
@@ -237,7 +243,9 @@ async function saveTroupeau() {
   const btn = document.getElementById('btn-save-troupeau');
   btn.textContent = 'Enregistrement…'; btn.disabled = true;
 
-  const payload = { nom_troupeau: nom, taille, id_eleveur: parseInt(eleveur) };
+  // Pour un éleveur, id_eleveur est auto-assigné côté serveur via le JWT
+  const payload = { nom_troupeau: nom, taille };
+  if (S.user?.role === 'administrateur' && eleveur) payload.id_eleveur = parseInt(eleveur);
   const { ok, data } = id
     ? await api(`/troupeaux/${id}`, 'PUT',  { nom_troupeau: nom, taille })
     : await api('/troupeaux',       'POST', payload);

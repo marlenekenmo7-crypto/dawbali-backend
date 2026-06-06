@@ -5,9 +5,11 @@ function initMap() {
   if (S.map) { S.map.invalidateSize(); return; }
 
   S.map = L.map('map').setView([7.5, 13.8], 7);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '© CartoDB', maxZoom: 19
-  }).addTo(S.map);
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  const tileUrl = isDark
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+  L.tileLayer(tileUrl, { attribution: '© CartoDB', maxZoom: 19 }).addTo(S.map);
 
   drawZonesOnMap();
   updateMapPositions();
@@ -76,6 +78,10 @@ async function updateMapPositions() {
       .on('click', () => selectHerdOnMap(herd));
     S.markers.push(marker);
   }
+
+  // Afficher/masquer le bandeau "pas de données GPS"
+  const noData = document.getElementById('map-no-data');
+  if (noData) noData.style.display = S.markers.length === 0 ? 'flex' : 'none';
 
   setEl('map-last-update', new Date().toLocaleTimeString('fr-FR'));
 }

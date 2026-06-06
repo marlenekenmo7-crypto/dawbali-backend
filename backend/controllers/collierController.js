@@ -56,13 +56,26 @@ const collierController = {
   // Récupérer tous les colliers
   async getAllColliers(req, res) {
     try {
-      const result = await pool.query(
-        `SELECT c.*, t.nom_troupeau, e.nom_eleveur
-         FROM collier c
-         LEFT JOIN troupeau t ON c.id_troupeau = t.id_troupeau
-         LEFT JOIN eleveur e ON t.id_eleveur = e.id_eleveur
-         ORDER BY c.id_collier`
-      );
+      let result;
+      if (req.user.role === 'eleveur') {
+        result = await pool.query(
+          `SELECT c.*, t.nom_troupeau, e.nom_eleveur
+           FROM collier c
+           LEFT JOIN troupeau t ON c.id_troupeau = t.id_troupeau
+           LEFT JOIN eleveur e ON t.id_eleveur = e.id_eleveur
+           WHERE e.id_eleveur = $1
+           ORDER BY c.id_collier`,
+          [req.user.id]
+        );
+      } else {
+        result = await pool.query(
+          `SELECT c.*, t.nom_troupeau, e.nom_eleveur
+           FROM collier c
+           LEFT JOIN troupeau t ON c.id_troupeau = t.id_troupeau
+           LEFT JOIN eleveur e ON t.id_eleveur = e.id_eleveur
+           ORDER BY c.id_collier`
+        );
+      }
       res.json({ success: true, count: result.rows.length, data: result.rows });
     } catch (error) {
       console.error('Erreur récupération colliers:', error);

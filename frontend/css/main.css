@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════
-   DAWBALI — Design System v3
+   GEOALERTE-CM — Design System v3
    Concept   : "Terrain Monitor" — precision de terrain,
                chaleur organique du Sahel, instruments IoT
    Fonts     : Syne (titres) · Outfit (corps) · JetBrains Mono (data)
@@ -116,6 +116,9 @@
   --shadow:   0 1px 6px rgba(0,0,0,.07);
   --shadow2:  0 4px 24px rgba(0,0,0,.11);
 }
+
+/* ══ RÔLES — masquage conditionnel ══════════════════════ */
+[data-role="eleveur"] .admin-only { display: none !important; }
 
 /* ══ RESET ══════════════════════════════════════════════ */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }

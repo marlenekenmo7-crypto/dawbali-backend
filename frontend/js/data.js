@@ -3,13 +3,10 @@
    ════════════════════════════════════════ */
 async function refreshAll() {
   if (!S.token) return;
-  await Promise.all([
-    fetchEleveurs(),
-    fetchHerds(),
-    fetchDevices(),
-    fetchZones(),
-    fetchAlerts(),
-  ]);
+  const isAdmin = S.user?.role === 'administrateur';
+  const tasks = [fetchHerds(), fetchDevices(), fetchZones(), fetchAlerts()];
+  if (isAdmin) tasks.push(fetchEleveurs());
+  await Promise.all(tasks);
   renderDashboardChart();
 }
 

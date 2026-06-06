@@ -3,8 +3,9 @@ const pool = require('../config/database');
 const troupeauController = {
   createTroupeau: async (req, res) => {
     try {
-      const { nom_troupeau, taille, id_eleveur } = req.body;
-      
+      const { nom_troupeau, taille } = req.body;
+      const id_eleveur = req.user.role === 'eleveur' ? req.user.id : req.body.id_eleveur;
+
       if (!nom_troupeau || !id_eleveur) {
         return res.status(400).json({ success: false, error: 'nom_troupeau et id_eleveur sont requis' });
       }
@@ -25,12 +26,23 @@ const troupeauController = {
 
   getAllTroupeaux: async (req, res) => {
     try {
-      const result = await pool.query(`
-        SELECT t.*, e.nom_eleveur, e.telephone
-        FROM TROUPEAU t
-        LEFT JOIN ELEVEUR e ON t.id_eleveur = e.id_eleveur
-        ORDER BY t.date_creation DESC
-      `);
+      let result;
+      if (req.user.role === 'eleveur') {
+        result = await pool.query(`
+          SELECT t.*, e.nom_eleveur, e.telephone
+          FROM TROUPEAU t
+          LEFT JOIN ELEVEUR e ON t.id_eleveur = e.id_eleveur
+          WHERE t.id_eleveur = $1
+          ORDER BY t.date_creation DESC
+        `, [req.user.id]);
+      } else {
+        result = await pool.query(`
+          SELECT t.*, e.nom_eleveur, e.telephone
+          FROM TROUPEAU t
+          LEFT JOIN ELEVEUR e ON t.id_eleveur = e.id_eleveur
+          ORDER BY t.date_creation DESC
+        `);
+      }
       res.json({ success: true, count: result.rows.length, data: result.rows });
     } catch (error) {
       console.error('Erreur:', error);
