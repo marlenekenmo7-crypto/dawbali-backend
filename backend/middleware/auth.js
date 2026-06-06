@@ -62,25 +62,16 @@ async function verifyToken(req, res, next) {
     } 
     else if (decoded.role === 'administrateur') {
       const result = await pool.query(
-        `SELECT 
-          id_administrateur as id, 
-          nom_administrateur as nom, 
-          telephone, 
-          'administrateur' as role,
-          statut_admin as statut
-         FROM ADMINISTRATEUR 
+        `SELECT
+          id_administrateur as id,
+          nom_administrateur as nom,
+          telephone,
+          'administrateur' as role
+         FROM ADMINISTRATEUR
          WHERE id_administrateur = $1`,
         [decoded.id]
       );
       user = result.rows[0];
-      
-      // Vérifier si l'admin est actif
-      if (user && user.statut !== 'actif') {
-        return res.status(403).json({ 
-          success: false, 
-          error: 'Compte administrateur désactivé.' 
-        });
-      }
     }
     
     if (!user) {
