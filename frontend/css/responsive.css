@@ -52,6 +52,10 @@
     z-index: 500;
     transition: left .25s cubic-bezier(.4,0,.2,1);
     overflow-y: auto;
+    /* Couche GPU isolée : évite le flou causé par backdrop-filter sur Android */
+    transform: translateZ(0);
+    will-change: left;
+    -webkit-transform: translateZ(0);
   }
   .sidebar.mobile-open { left: 0; }
 

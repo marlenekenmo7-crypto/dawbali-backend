@@ -157,8 +157,8 @@ html, body {
 /* ══ OVERLAY MOBILE ════════════════════════════════════ */
 .sidebar-overlay {
   display:none; position:fixed; inset:0;
-  background:rgba(0,0,0,.7); z-index:499;
-  backdrop-filter:blur(6px);
+  background:rgba(0,0,0,.62); z-index:499;
+  /* Pas de backdrop-filter ici : sur Android il rend la sidebar floue */
 }
 .sidebar-overlay.visible { display:block; }
 
