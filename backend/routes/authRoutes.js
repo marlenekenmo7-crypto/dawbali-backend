@@ -125,4 +125,40 @@ router.post('/login/admin', async (req, res) => {
   }
 });
 
+// Inscription éleveur
+router.post('/register', async (req, res) => {
+  try {
+    const { nom_eleveur, telephone, mot_de_passe, localite } = req.body;
+
+    if (!nom_eleveur || !telephone || !mot_de_passe) {
+      return res.status(400).json({ success: false, error: 'Nom, téléphone et mot de passe requis' });
+    }
+
+    const exists = await pool.query('SELECT id_eleveur FROM eleveur WHERE telephone = $1', [telephone]);
+    if (exists.rows.length > 0) {
+      return res.status(400).json({ success: false, error: 'Ce numéro de téléphone est déjà utilisé' });
+    }
+
+    const hash = await bcrypt.hash(mot_de_passe, 10);
+    const result = await pool.query(
+      `INSERT INTO eleveur (nom_eleveur, telephone, mot_de_passe, localite, date_inscription)
+       VALUES ($1, $2, $3, $4, NOW())
+       RETURNING id_eleveur, nom_eleveur, telephone, localite`,
+      [nom_eleveur, telephone, hash, localite]
+    );
+
+    const eleveur = result.rows[0];
+    const token = generateToken({ id: eleveur.id_eleveur, role: 'eleveur', telephone: eleveur.telephone, nom: eleveur.nom_eleveur });
+
+    res.status(201).json({
+      success: true,
+      token,
+      user: { id: eleveur.id_eleveur, nom: eleveur.nom_eleveur, telephone: eleveur.telephone, role: 'eleveur' }
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;

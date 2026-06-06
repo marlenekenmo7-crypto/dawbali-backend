@@ -154,7 +154,13 @@ function renderHerdsTable() {
       <td>${h.taille || 0} têtes</td>
       <td>${collarBadge}</td>
       <td><span class="pill ok">Actif</span></td>
-      <td><button class="btn btn-ghost btn-sm" onclick="viewHerdOnMap(${h.id_troupeau})">Carte</button></td>
+      <td>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="viewHerdOnMap(${h.id_troupeau})">Carte</button>
+          <button class="btn btn-secondary btn-sm" onclick="editTroupeau(${h.id_troupeau})">Modifier</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteTroupeau(${h.id_troupeau},'${(h.nom_troupeau||'').replace(/'/g,"\\'")}')">Suppr.</button>
+        </div>
+      </td>
     </tr>`;
   }).join('');
 }
@@ -182,6 +188,12 @@ function renderDevicesTable() {
       </td>
       <td><span class="pill ${d.statut === 'actif' ? 'ok' : 'off'}">${d.statut || 'inactif'}</span></td>
       <td class="mono tbl-hide-xs" style="font-size:11px;">${lastUpd}</td>
+      <td>
+        <div style="display:flex;gap:5px;">
+          <button class="btn btn-secondary btn-sm" onclick="editCollier(${d.id_collier})">Modifier</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCollier(${d.id_collier})">Suppr.</button>
+        </div>
+      </td>
     </tr>`;
   }).join('');
 }

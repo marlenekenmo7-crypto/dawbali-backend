@@ -331,6 +331,7 @@
             <div class="section-title">Gestion des Troupeaux</div>
             <div class="section-sub" id="herds-sub">Chargement…</div>
           </div>
+          <button class="btn btn-primary" onclick="openTroupeauModal()">+ Nouveau troupeau</button>
         </div>
         <div class="card">
           <div class="card-header"><div class="card-title">Liste complète</div></div>
@@ -360,6 +361,7 @@
             <div class="section-title">Dispositifs IoT</div>
             <div class="section-sub">Colliers GPS/GSM</div>
           </div>
+          <button class="btn btn-primary" onclick="openCollierModal()">+ Nouveau collier</button>
         </div>
         <div class="grid-4" style="margin-bottom:18px;">
           <div class="kpi">
@@ -390,6 +392,7 @@
                   <th>Batterie</th>
                   <th>Statut</th>
                   <th class="tbl-hide-xs">Dernière MAJ</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="devices-table"></tbody>
@@ -615,7 +618,8 @@
       </div>
       <div id="login-error" style="color:var(--red);font-size:12px;display:none;margin-top:4px;padding:8px 10px;background:var(--red-dim);border-radius:6px;"></div>
     </div>
-    <div class="modal-footer">
+    <div class="modal-footer" style="justify-content:space-between;">
+      <button class="btn btn-ghost btn-sm" onclick="openRegisterModal()" style="font-size:12px;">Créer un compte éleveur</button>
       <button class="btn btn-primary" onclick="submitLogin()" id="btn-login">Se connecter</button>
     </div>
   </div>
@@ -663,11 +667,127 @@
           <input class="form-input" id="eleveur-localite" placeholder="Ngaoundéré"/>
         </div>
       </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Mot de passe <span style="color:var(--text3);font-weight:400;">(laisser vide pour ne pas changer)</span></label>
+          <input class="form-input" id="eleveur-mdp" type="password" placeholder="••••••"/>
+        </div>
+      </div>
       <div id="eleveur-error" style="color:var(--red);font-size:12px;display:none;margin-top:4px;padding:8px 10px;background:var(--red-dim);border-radius:6px;"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeEleveurModal()">Annuler</button>
       <button class="btn btn-primary" onclick="saveEleveur()" id="btn-save-eleveur">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ MODAL INSCRIPTION ════════ -->
+<div class="modal-overlay" id="register-modal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <span class="modal-title">Créer un compte éleveur</span>
+      <span class="modal-close" onclick="closeRegisterModal()">×</span>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nom complet</label>
+          <input class="form-input" id="reg-nom" placeholder="Ibrahim Moussa"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Téléphone</label>
+          <input class="form-input" id="reg-tel" type="tel" placeholder="699887766"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Localité</label>
+          <input class="form-input" id="reg-localite" placeholder="Ngaoundéré"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <input class="form-input" id="reg-mdp" type="password" placeholder="••••••"/>
+        </div>
+      </div>
+      <div id="reg-error" style="color:var(--red);font-size:12px;display:none;margin-top:4px;padding:8px 10px;background:var(--red-dim);border-radius:6px;"></div>
+    </div>
+    <div class="modal-footer" style="justify-content:space-between;">
+      <button class="btn btn-ghost btn-sm" onclick="closeRegisterModal();showLoginModal()">Déjà un compte</button>
+      <button class="btn btn-primary" onclick="submitRegister()" id="btn-register">S'inscrire</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ MODAL TROUPEAU ════════ -->
+<div class="modal-overlay" id="troupeau-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="troupeau-modal-title">Nouveau troupeau</span>
+      <span class="modal-close" onclick="closeTroupeauModal()">×</span>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="troupeau-id"/>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nom du troupeau</label>
+          <input class="form-input" id="troupeau-nom" placeholder="Troupeau Ngaoundéré A"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Taille (têtes)</label>
+          <input class="form-input" id="troupeau-taille" type="number" placeholder="50" min="1"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Éleveur propriétaire</label>
+          <select class="form-input" id="troupeau-eleveur"></select>
+        </div>
+      </div>
+      <div id="troupeau-error" style="color:var(--red);font-size:12px;display:none;margin-top:4px;padding:8px 10px;background:var(--red-dim);border-radius:6px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeTroupeauModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveTroupeau()" id="btn-save-troupeau">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ MODAL COLLIER ════════ -->
+<div class="modal-overlay" id="collier-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="collier-modal-title">Nouveau collier</span>
+      <span class="modal-close" onclick="closeCollierModal()">×</span>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="collier-id"/>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Troupeau associé</label>
+          <select class="form-input" id="collier-troupeau"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Statut</label>
+          <select class="form-input" id="collier-statut">
+            <option value="actif">Actif</option>
+            <option value="inactif">Inactif</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Niveau batterie (%)</label>
+          <input class="form-input" id="collier-batterie" type="number" placeholder="100" min="0" max="100"/>
+        </div>
+      </div>
+      <div id="collier-error" style="color:var(--red);font-size:12px;display:none;margin-top:4px;padding:8px 10px;background:var(--red-dim);border-radius:6px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeCollierModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveCollier()" id="btn-save-collier">Enregistrer</button>
     </div>
   </div>
 </div>

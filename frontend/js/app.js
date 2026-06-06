@@ -41,11 +41,18 @@ document.getElementById('user-chip').addEventListener('click', () => {
 });
 
 // Fermer les modals en cliquant l'overlay
-['login-modal', 'confirm-modal', 'eleveur-modal'].forEach(id => {
+const _modalClosers = {
+  'confirm-modal':   closeConfirm,
+  'eleveur-modal':   closeEleveurModal,
+  'register-modal':  closeRegisterModal,
+  'troupeau-modal':  closeTroupeauModal,
+  'collier-modal':   closeCollierModal,
+};
+['login-modal', 'confirm-modal', 'eleveur-modal', 'register-modal', 'troupeau-modal', 'collier-modal'].forEach(id => {
   document.getElementById(id)?.addEventListener('click', e => {
     if (e.target.id !== id) return;
-    if (id === 'confirm-modal')  closeConfirm();
-    else if (id === 'eleveur-modal') closeEleveurModal();
+    const fn = _modalClosers[id];
+    if (fn) fn();
     else if (id !== 'login-modal' || S.token) closeLoginModal();
   });
 });
