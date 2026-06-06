@@ -1,4 +1,4 @@
-const collierModel = require('../models/Collier');
+const collierModel = require('../models/collier');
 const pool = require('../config/database');
 
 const collierController = {
