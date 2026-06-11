@@ -89,12 +89,15 @@ CREATE TABLE IF NOT EXISTS alerte (
 
 -- ── NOTIFICATION_ELEVEUR ──────────────────────────────────
 CREATE TABLE IF NOT EXISTS notification_eleveur (
-  id_notif_elev  SERIAL PRIMARY KEY,
-  id_alerte      INTEGER REFERENCES alerte(id_alerte) ON DELETE CASCADE,
-  id_eleveur     INTEGER REFERENCES eleveur(id_eleveur) ON DELETE CASCADE,
-  canal          VARCHAR(20) DEFAULT 'sms',   -- 'sms' | 'whatsapp'
-  statut_envoi   VARCHAR(20) DEFAULT 'envoye',
-  envoye_a       TIMESTAMP DEFAULT NOW()
+  id_notif_elev   SERIAL PRIMARY KEY,
+  id_alerte       INTEGER REFERENCES alerte(id_alerte) ON DELETE CASCADE,
+  id_eleveur      INTEGER REFERENCES eleveur(id_eleveur) ON DELETE CASCADE,
+  canal           VARCHAR(20)  DEFAULT 'sms',     -- 'sms' | 'whatsapp'
+  contenu_message TEXT,
+  statut_envoi    VARCHAR(20)  DEFAULT 'envoye',
+  nb_tentatives   INTEGER      DEFAULT 1,
+  date_envoi      TIMESTAMP    DEFAULT NOW(),
+  envoye_a        TIMESTAMP    DEFAULT NOW()
 );
 
 -- ── INDEX GÉOSPATIAUX ─────────────────────────────────────
@@ -109,16 +112,33 @@ CREATE INDEX IF NOT EXISTS idx_alerte_status       ON alerte          (status);
 CREATE INDEX IF NOT EXISTS idx_collier_troupeau    ON collier         (id_troupeau);
 
 -- ============================================================
---  DONNÉES INITIALES — premier administrateur
---  Mot de passe en clair (sera accepté tel quel par le backend)
---  Changez-le via l'interface après la première connexion.
+--  DONNÉES INITIALES
+--  Les mots de passe ci-dessous sont en clair.
+--  Le backend accepte les deux formats (clair et bcrypt).
+--  initDb.js les hash automatiquement au premier démarrage.
+--
+--  Compte admin  : 690000001 / admin123
+--  Compte démo   : 699001001 / demo123
 -- ============================================================
 
 INSERT INTO administrateur (nom_administrateur, telephone, mot_de_passe)
 VALUES ('Admin GeoAlerte-CM', '690000001', 'admin123')
 ON CONFLICT (telephone) DO NOTHING;
 
--- Éleveur de test
+-- Éleveur démo
 INSERT INTO eleveur (nom_eleveur, telephone, mot_de_passe, localite)
-VALUES ('Moussa Bello', '690000002', 'eleveur123', 'Ngaoundéré')
+VALUES ('Ibrahim Moussa', '699001001', 'demo123', 'Ngaoundéré')
 ON CONFLICT (telephone) DO NOTHING;
+
+-- Zones démo (Adamaoua, Cameroun)
+INSERT INTO zones (nom_zone, type_zone, forme_geographique, description_zone, rayon_alerte_approche, actif)
+SELECT 'Plaine agricole Wack', 'agricole',
+       ST_GeomFromGeoJSON('{"type":"Polygon","coordinates":[[[13.54,7.28],[13.62,7.28],[13.62,7.34],[13.54,7.34],[13.54,7.28]]]}'),
+       'Zone agricole protégée — Wack Ngoumba', 600, true
+WHERE NOT EXISTS (SELECT 1 FROM zones WHERE nom_zone='Plaine agricole Wack');
+
+INSERT INTO zones (nom_zone, type_zone, forme_geographique, description_zone, rayon_alerte_approche, actif)
+SELECT 'Couloir de transhumance Vina', 'transhumance',
+       ST_GeomFromGeoJSON('{"type":"Polygon","coordinates":[[[13.58,7.35],[13.66,7.35],[13.66,7.48],[13.58,7.48],[13.58,7.35]]]}'),
+       'Couloir officiel de passage — axe nord Adamaoua', 400, true
+WHERE NOT EXISTS (SELECT 1 FROM zones WHERE nom_zone='Couloir de transhumance Vina');

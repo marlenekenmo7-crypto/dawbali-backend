@@ -1,4 +1,5 @@
-const pool = require('./database');
+const pool   = require('./database');
+const bcrypt = require('bcryptjs');
 
 async function initDb() {
   try {
@@ -117,20 +118,28 @@ async function initDb() {
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_alerte_troupeau   ON alerte         (id_troupeau)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_alerte_status     ON alerte         (status)`);
 
-    // Administrateur
-    await pool.query(`
-      INSERT INTO administrateur (nom_administrateur, telephone, mot_de_passe)
-      VALUES ('Admin GeoAlerte-CM', '690000001', 'admin123')
-      ON CONFLICT (telephone) DO NOTHING
-    `);
+    // Administrateur (mot de passe hashé si pas encore créé)
+    const adminExists = await pool.query(`SELECT id_administrateur FROM administrateur WHERE telephone='690000001'`);
+    if (adminExists.rows.length === 0) {
+      const adminHash = await bcrypt.hash('admin123', 10);
+      await pool.query(
+        `INSERT INTO administrateur (nom_administrateur, telephone, mot_de_passe)
+         VALUES ('Admin GeoAlerte-CM', '690000001', $1)`,
+        [adminHash]
+      );
+    }
 
     // ── DONNÉES DE DÉMONSTRATION ──────────────────────────────
-    // Éleveur démo
-    await pool.query(`
-      INSERT INTO eleveur (nom_eleveur, telephone, mot_de_passe, localite)
-      VALUES ('Ibrahim Moussa', '699001001', 'demo123', 'Ngaoundéré')
-      ON CONFLICT (telephone) DO NOTHING
-    `);
+    // Éleveur démo (mot de passe hashé si pas encore créé)
+    const eleveurDemoExists = await pool.query(`SELECT id_eleveur FROM eleveur WHERE telephone='699001001'`);
+    if (eleveurDemoExists.rows.length === 0) {
+      const eleveurHash = await bcrypt.hash('demo123', 10);
+      await pool.query(
+        `INSERT INTO eleveur (nom_eleveur, telephone, mot_de_passe, localite)
+         VALUES ('Ibrahim Moussa', '699001001', $1, 'Ngaoundéré')`,
+        [eleveurHash]
+      );
+    }
 
     // Troupeaux démo (liés à l'éleveur démo)
     await pool.query(`

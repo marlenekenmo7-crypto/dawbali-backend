@@ -2,102 +2,73 @@ const pool = require('../config/database');
 
 class GeofencingService {
   
-  // Vérifier la position d'un troupeau par rapport à TOUTES les zones
+  // Vérifier la position d'un troupeau par rapport à TOUTES les zones (1 seule requête)
   async checkTroupeauPosition(id_troupeau, longitude, latitude) {
     try {
-      // Récupérer toutes les zones actives
+      const point = `ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)`;
+
+      // Une seule requête : géométrie + distance pour toutes les zones actives
       const zonesResult = await pool.query(
-        `SELECT id_zone, nom_zone, type_zone, rayon_alerte_approche 
-         FROM zones 
-         WHERE actif = true`
+        `SELECT
+           id_zone, nom_zone, type_zone, rayon_alerte_approche,
+           ST_Contains(forme_geographique, $1::geometry)           AS est_dedans,
+           ST_Distance(forme_geographique::geography, $1::geography) AS distance_metres
+         FROM zones
+         WHERE actif = true AND forme_geographique IS NOT NULL`,
+        [`SRID=4326;POINT(${longitude} ${latitude})`]
       );
-      
-      const zones = zonesResult.rows;
+
       const alertesGenerees = [];
-      
-      console.log(`🔍 Vérification troupeau ${id_troupeau} dans ${zones.length} zones...`);
-      
-      for (const zone of zones) {
-        // Vérifier la relation entre le point et la zone
-        const verif = await pool.query(
-          `SELECT 
-            ST_Contains(forme_geographique, ST_SetSRID(ST_MakePoint($1, $2), 4326)) as est_dedans,
-            ST_Distance(
-              forme_geographique::geography, 
-              ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
-            ) as distance_metres
-           FROM zones 
-           WHERE id_zone = $3`,
-          [longitude, latitude, zone.id_zone]
-        );
-        
-        const estDedans = verif.rows[0].est_dedans;
-        const distance = parseFloat(verif.rows[0].distance_metres);
-        
-        // Cas 1: Le troupeau est DANS la zone
+      console.log(`🔍 Troupeau ${id_troupeau} — ${zonesResult.rows.length} zone(s) vérifiée(s)`);
+
+      for (const zone of zonesResult.rows) {
+        const estDedans = zone.est_dedans;
+        const distance  = parseFloat(zone.distance_metres);
+
         if (estDedans) {
-          console.log(`⚠️ Troupeau ${id_troupeau} DANS la zone ${zone.nom_zone}`);
-          
-          // Vérifier si une alerte récente existe (moins de 1 heure)
-          const alerteExistante = await pool.query(
-            `SELECT id_alerte FROM alerte 
-             WHERE id_troupeau = $1 AND id_zone = $2 
-             AND type_alerte = 'ENTREE_ZONE'
-             AND created_at > NOW() - INTERVAL '1 hour'`,
+          console.log(`⚠️ Troupeau ${id_troupeau} DANS ${zone.nom_zone}`);
+          const doublon = await pool.query(
+            `SELECT id_alerte FROM alerte
+             WHERE id_troupeau=$1 AND id_zone=$2 AND type_alerte='ENTREE_ZONE'
+               AND created_at > NOW() - INTERVAL '1 hour'`,
             [id_troupeau, zone.id_zone]
           );
-          
-          if (alerteExistante.rows.length === 0) {
+          if (doublon.rows.length === 0) {
             const alerte = await this.creerAlerte({
-              id_troupeau,
-              id_zone: zone.id_zone,
-              type_alerte: 'ENTREE_ZONE',
-              distance_metres: 0,
-              message: `🚨 ALERTE ROUGE: Le troupeau est entré dans la zone ${zone.nom_zone} (${zone.type_zone})!`,
-              longitude,
-              latitude
+              id_troupeau, id_zone: zone.id_zone,
+              type_alerte: 'ENTREE_ZONE', distance_metres: 0,
+              message: `🚨 Le troupeau est entré dans la zone ${zone.nom_zone} (${zone.type_zone})`
             });
-            alertesGenerees.push(alerte);
-            
-            // Notifier l'éleveur immédiatement
-            await this.notifierEleveur(id_troupeau, alerte.message, 'ENTREE_ZONE');
+            if (alerte) {
+              alertesGenerees.push(alerte);
+              await this.notifierEleveur(id_troupeau, alerte);
+            }
           }
-        }
-        
-        // Cas 2: Le troupeau s'APPROCHE de la zone (dans le rayon d'alerte)
-        else if (zone.rayon_alerte_approche && distance <= zone.rayon_alerte_approche) {
-          console.log(`⚠️ Troupeau ${id_troupeau} à ${Math.round(distance)}m de la zone ${zone.nom_zone}`);
-          
-          // Vérifier si une alerte récente existe (moins de 30 minutes)
-          const alerteExistante = await pool.query(
-            `SELECT id_alerte FROM alerte 
-             WHERE id_troupeau = $1 AND id_zone = $2 
-             AND type_alerte = 'APPROCHE_ZONE'
-             AND created_at > NOW() - INTERVAL '30 minutes'`,
+        } else if (zone.rayon_alerte_approche && distance <= zone.rayon_alerte_approche) {
+          console.log(`⚠️ Troupeau ${id_troupeau} à ${Math.round(distance)}m de ${zone.nom_zone}`);
+          const doublon = await pool.query(
+            `SELECT id_alerte FROM alerte
+             WHERE id_troupeau=$1 AND id_zone=$2 AND type_alerte='APPROCHE_ZONE'
+               AND created_at > NOW() - INTERVAL '30 minutes'`,
             [id_troupeau, zone.id_zone]
           );
-          
-          if (alerteExistante.rows.length === 0) {
+          if (doublon.rows.length === 0) {
             const alerte = await this.creerAlerte({
-              id_troupeau,
-              id_zone: zone.id_zone,
-              type_alerte: 'APPROCHE_ZONE',
-              distance_metres: Math.round(distance),
-              message: `⚠️ ALERTE ORANGE: Un troupeau s'approche de la zone ${zone.nom_zone} (${zone.type_zone}). Distance: ${Math.round(distance)} mètres`,
-              longitude,
-              latitude
+              id_troupeau, id_zone: zone.id_zone,
+              type_alerte: 'APPROCHE_ZONE', distance_metres: Math.round(distance),
+              message: `⚠️ Troupeau à ${Math.round(distance)} m de la zone ${zone.nom_zone} (${zone.type_zone})`
             });
-            alertesGenerees.push(alerte);
-            
-            // Notifier l'éleveur
-            await this.notifierEleveur(id_troupeau, alerte.message, 'APPROCHE_ZONE');
+            if (alerte) {
+              alertesGenerees.push(alerte);
+              await this.notifierEleveur(id_troupeau, alerte);
+            }
           }
         }
       }
-      
+
       console.log(`✅ ${alertesGenerees.length} alerte(s) générée(s)`);
       return alertesGenerees;
-      
+
     } catch (error) {
       console.error('Erreur géofencing:', error);
       return [];
@@ -123,10 +94,9 @@ class GeofencingService {
     }
   }
   
-  // Notifier l'éleveur par SMS
-  async notifierEleveur(id_troupeau, message, typeAlerte) {
+  // Notifier l'éleveur (enregistrement notification + log SMS)
+  async notifierEleveur(id_troupeau, alerte) {
     try {
-      // Récupérer les infos de l'éleveur
       const result = await pool.query(
         `SELECT e.id_eleveur, e.nom_eleveur, e.telephone, t.nom_troupeau
          FROM troupeau t
@@ -134,36 +104,28 @@ class GeofencingService {
          WHERE t.id_troupeau = $1`,
         [id_troupeau]
       );
-      
-      if (result.rows.length === 0) {
-        console.log('❌ Éleveur non trouvé');
-        return;
-      }
-      
+
+      if (result.rows.length === 0) { console.log('❌ Éleveur non trouvé'); return; }
+
       const eleveur = result.rows[0];
-      const telephone = eleveur.telephone;
-      
-      if (!telephone) {
-        console.log(`⚠️ Pas de téléphone pour l'éleveur ${eleveur.nom_eleveur}`);
+      if (!eleveur.telephone) {
+        console.log(`⚠️ Pas de téléphone pour ${eleveur.nom_eleveur}`);
         return;
       }
-      
-      const messageComplet = `${message} - Troupeau: ${eleveur.nom_troupeau}`;
-      
-      // Simulation d'envoi SMS (à remplacer par Twilio plus tard)
-      console.log(`📱 [SMS] À ${telephone} (${eleveur.nom_eleveur}): ${messageComplet}`);
-      
-      // Enregistrer la notification
+
+      const contenu = `${alerte.message} — Troupeau: ${eleveur.nom_troupeau}`;
+      console.log(`📱 [SMS] → ${eleveur.telephone} (${eleveur.nom_eleveur}): ${contenu}`);
+
       await pool.query(
-        `INSERT INTO notification_eleveur (id_alerte, id_eleveur, canal, contenu_message, date_envoi, statut_envoi, nb_tentatives)
+        `INSERT INTO notification_eleveur
+           (id_alerte, id_eleveur, canal, contenu_message, date_envoi, statut_envoi, nb_tentatives)
          VALUES ($1, $2, 'sms', $3, NOW(), 'envoye', 1)`,
-        [null, eleveur.id_eleveur, messageComplet]
+        [alerte.id_alerte, eleveur.id_eleveur, contenu]
       );
-      
-      console.log(`✅ Notification enregistrée pour ${eleveur.nom_eleveur}`);
-      
+
+      console.log(`✅ Notification liée à alerte #${alerte.id_alerte} enregistrée`);
     } catch (error) {
-      console.error('Erreur envoi notification:', error);
+      console.error('Erreur notification:', error);
     }
   }
   
