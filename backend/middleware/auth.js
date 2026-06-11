@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
 
 // Clé secrète pour signer les tokens
-const JWT_SECRET = process.env.JWT_SECRET || 'dawbali_secret_key_2024';
+const JWT_SECRET = process.env.JWT_SECRET || 'geoalerte_secret_key_2024';
 
 /**
  * Génère un token JWT pour un utilisateur

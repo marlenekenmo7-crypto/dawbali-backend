@@ -1,7 +1,7 @@
 {
-  "name": "dawbali-backend",
-  "version": "1.0.0",
-  "description": "Système d'alerte précoce pour conflits agro-pastoraux - Cameroun",
+  "name": "geoalerte-cm-backend",
+  "version": "1.2.0",
+  "description": "GeoAlerte-CM — Plateforme IoT de prévention des conflits agro-pastoraux, Cameroun",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

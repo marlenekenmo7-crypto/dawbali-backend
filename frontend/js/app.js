@@ -101,7 +101,7 @@ function copyArduinoCode() {
 
 function copyCurlCode() {
   const base = CONFIG.apiBase || '';
-  const text = `curl -X POST ${base}/iot/gps \\\n  -H "Content-Type: application/json" \\\n  -d '{"api_key":"dawbali_iot_key_2024","id_troupeau":1,"longitude":13.605,"latitude":7.421,"precision_pos":4,"niveau_batterie":82}'`;
+  const text = `curl -X POST ${base}/iot/gps \\\n  -H "Content-Type: application/json" \\\n  -d '{"api_key":"geoalerte_iot_key_2024","id_troupeau":1,"longitude":13.605,"latitude":7.421,"precision_pos":4,"niveau_batterie":82}'`;
   navigator.clipboard.writeText(text).then(() =>
     showToast('ok', 'Copié !', 'Commande curl copiée')
   ).catch(() => showToast('warn', 'Copie échouée', 'Copiez manuellement'));

@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 3000;
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
   : ['http://localhost:3000', 'http://localhost:5500', 'http://127.0.0.1:5500',
-     'https://dawbali.netlify.app', 'https://geoalerte-cm.netlify.app'];
+     'https://geoalerte-cm.netlify.app', 'https://geoalerte-cm.vercel.app'];
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -91,7 +91,7 @@ app.broadcastAlerte = function(alerte, id_eleveur) {
 };
 
 // ── SANTÉ ─────────────────────────────────────────────────
-app.get('/',       (_req, res) => res.json({ app: 'GeoAlerte-CM', version: '1.1.0', status: 'running' }));
+app.get('/',       (_req, res) => res.json({ app: 'GeoAlerte-CM', version: '1.2.0', status: 'running' }));
 app.get('/health', (_req, res) => res.json({ status: 'OK', timestamp: new Date() }));
 
 // ── DÉMARRAGE ─────────────────────────────────────────────

@@ -4,12 +4,12 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'API Dawbali - Système d\'Alerte Agro-Pastoral',
+      title: 'API GeoAlerte-CM — Système d\'Alerte Agro-Pastoral',
       version: '1.0.0',
       description: 'Documentation interactive de l\'API pour la gestion des alertes précoces.',
       contact: {
-        name: 'Support Technique Dawbali',
-        email: 'support@dawbali.com',
+        name: 'Support Technique GeoAlerte-CM',
+        email: 'support@geoalerte-cm.cm',
       },
     },
     servers: [

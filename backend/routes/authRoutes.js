@@ -4,7 +4,7 @@ const pool = require('../config/database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dawbali_secret_key_2024';
+const JWT_SECRET = process.env.JWT_SECRET || 'geoalerte_secret_key_2024';
 
 function generateToken(user) {
   return jwt.sign(

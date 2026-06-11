@@ -699,7 +699,7 @@
                   </div>
                 </div>
                 <div style="position:relative;margin-bottom:8px;">
-                  <code id="guide-apikey" style="display:block;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:12px;font-family:var(--mono);color:var(--gold2);">dawbali_iot_key_2024</code>
+                  <code id="guide-apikey" style="display:block;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:12px;font-family:var(--mono);color:var(--gold2);">geoalerte_iot_key_2024</code>
                   <button onclick="copyGuideCode('guide-apikey')" style="position:absolute;top:6px;right:8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--text2);">Copier</button>
                 </div>
                 <div style="font-size:11px;color:var(--red);margin-top:6px;">⚠ Changer cette clé avant le déploiement en production — variable <code>API_KEY_IOT</code> dans <code>.env</code></div>
@@ -717,7 +717,7 @@
               <div class="card-body">
                 <div style="position:relative;margin-bottom:14px;">
                   <pre id="guide-json" style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:14px;font-size:11px;font-family:var(--mono);overflow-x:auto;margin:0;line-height:1.7;color:var(--text);">{
-  <span style="color:var(--gold2);">"api_key"</span>:        <span style="color:var(--green);">"dawbali_iot_key_2024"</span>,
+  <span style="color:var(--gold2);">"api_key"</span>:        <span style="color:var(--green);">"geoalerte_iot_key_2024"</span>,
   <span style="color:var(--gold2);">"id_troupeau"</span>:    <span style="color:var(--blue);">1</span>,
   <span style="color:var(--gold2);">"longitude"</span>:      <span style="color:var(--blue);">13.602145</span>,
   <span style="color:var(--gold2);">"latitude"</span>:       <span style="color:var(--blue);">7.418320</span>,
@@ -726,7 +726,7 @@
   <span style="color:var(--gold2);">"niveau_batterie"</span>: <span style="color:var(--blue);">87</span>
 }</pre>
                   <button onclick="copyRawCode('guide-json-raw')" style="position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--text2);">Copier</button>
-                  <textarea id="guide-json-raw" style="position:absolute;opacity:0;pointer-events:none;height:0;">{"api_key":"dawbali_iot_key_2024","id_troupeau":1,"longitude":13.602145,"latitude":7.418320,"precision_pos":4.5,"direction":135,"niveau_batterie":87}</textarea>
+                  <textarea id="guide-json-raw" style="position:absolute;opacity:0;pointer-events:none;height:0;">{"api_key":"geoalerte_iot_key_2024","id_troupeau":1,"longitude":13.602145,"latitude":7.418320,"precision_pos":4.5,"direction":135,"niveau_batterie":87}</textarea>
                 </div>
                 <table class="tbl" style="font-size:11px;">
                   <thead>
@@ -769,7 +769,7 @@
 <span style="color:var(--blue);">const char*</span> WIFI_SSID  = <span style="color:var(--green);">"VOTRE_WIFI"</span>;
 <span style="color:var(--blue);">const char*</span> WIFI_PASS  = <span style="color:var(--green);">"MOT_DE_PASSE"</span>;
 <span style="color:var(--blue);">const char*</span> SERVER_URL = <span style="color:var(--green);">"https://VOTRE_BACKEND/api/iot/gps"</span>;
-<span style="color:var(--blue);">const char*</span> API_KEY    = <span style="color:var(--green);">"dawbali_iot_key_2024"</span>;
+<span style="color:var(--blue);">const char*</span> API_KEY    = <span style="color:var(--green);">"geoalerte_iot_key_2024"</span>;
 <span style="color:var(--blue);">const int</span>   ID_TROUPEAU = <span style="color:var(--blue);">1</span>;
 <span style="color:var(--blue);">const long</span>  INTERVAL_MS = <span style="color:var(--blue);">60000</span>; <span style="color:var(--text3);">// 1 envoi / minute</span>
 
@@ -850,7 +850,7 @@ HardwareSerial gpsSerial(<span style="color:var(--blue);">2</span>);
                   <pre id="guide-curl" style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px 14px;font-size:11px;font-family:var(--mono);overflow-x:auto;margin:0;line-height:1.6;color:var(--text);">curl -X POST <span id="guide-curl-url" style="color:var(--green);"></span>/iot/gps \
   -H <span style="color:var(--gold2);">"Content-Type: application/json"</span> \
   -d <span style="color:var(--green);">'{
-    "api_key": "dawbali_iot_key_2024",
+    "api_key": "geoalerte_iot_key_2024",
     "id_troupeau": 1,
     "longitude": 13.605,
     "latitude": 7.421,

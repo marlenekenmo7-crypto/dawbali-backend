@@ -29,7 +29,7 @@ app.use('/api/eleveurs', eleveurRoutes);
 // Route principale
 app.get('/', (req, res) => {
   res.json({
-    message: '🚀 API Dawbali - Système d\'alerte agro-pastoral',
+    message: '🚀 API GeoAlerte-CM — Système d\'alerte agro-pastoral',
     version: '1.0.0',
     endpoints: {
       eleveurs: '/api/eleveurs',
@@ -50,7 +50,7 @@ app.get('/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`
   ═══════════════════════════════════════════════════════
-  🚀 Serveur Dawbali démarré !
+  🚀 GeoAlerte-CM démarré !
   ═══════════════════════════════════════════════════════
   📍 URL: http://localhost:${PORT}
   📡 API: http://localhost:${PORT}/api

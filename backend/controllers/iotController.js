@@ -1,7 +1,7 @@
 const pool = require('../config/database');
 const geofencingService = require('../services/geofencingService');
 
-const API_KEY_IOT = process.env.API_KEY_IOT || 'dawbali_iot_key_2024';
+const API_KEY_IOT = process.env.API_KEY_IOT || 'geoalerte_iot_key_2024';
 
 const iotController = {
   // Ingestion GPS

@@ -1,5 +1,5 @@
 -- ============================================================
---  DAWBALI — Schéma PostgreSQL + PostGIS
+--  GEOALERTE-CM — Schéma PostgreSQL + PostGIS
 --  À exécuter dans la console PSQL de Render (une seule fois)
 -- ============================================================
 
@@ -115,7 +115,7 @@ CREATE INDEX IF NOT EXISTS idx_collier_troupeau    ON collier         (id_troupe
 -- ============================================================
 
 INSERT INTO administrateur (nom_administrateur, telephone, mot_de_passe)
-VALUES ('Admin Dawbali', '690000001', 'admin123')
+VALUES ('Admin GeoAlerte-CM', '690000001', 'admin123')
 ON CONFLICT (telephone) DO NOTHING;
 
 -- Éleveur de test
