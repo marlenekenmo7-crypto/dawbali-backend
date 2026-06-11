@@ -21,8 +21,9 @@ function showPage(pageId) {
       if (S.map) setTimeout(() => S.map.invalidateSize(), 150);
     }, 50);
   }
-  if (pageId === 'reports') setTimeout(initReportsCharts, 100);
+  if (pageId === 'reports')  setTimeout(initReportsCharts, 100);
   if (pageId === 'settings') loadSettings();
+  if (pageId === 'iotguide') setTimeout(_fillGuideUrls, 50);
 
   closeSidebar(); // ferme le drawer mobile si ouvert
 }
@@ -60,6 +61,51 @@ const _modalClosers = {
 document.getElementById('login-password')?.addEventListener('keydown', e => {
   if (e.key === 'Enter') submitLogin();
 });
+
+// ── GUIDE IoT : remplir l'URL dynamique quand la page s'affiche ──
+const _origShowPage = showPage;
+// On va écraser showPage pour injecter l'URL dans le guide quand on l'ouvre
+// (défini après, voir ci-dessous)
+
+function _fillGuideUrls() {
+  const base = CONFIG.apiBase || '';
+  const el1  = document.getElementById('guide-api-url');
+  const el2  = document.getElementById('guide-curl-url');
+  if (el1) el1.textContent = base;
+  if (el2) el2.textContent = base;
+}
+
+function copyGuideCode(elementId) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent.trim()).then(() =>
+    showToast('ok', 'Copié !', 'Texte copié dans le presse-papiers')
+  ).catch(() => showToast('warn', 'Copie échouée', 'Copiez manuellement'));
+}
+
+function copyRawCode(elementId) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  navigator.clipboard.writeText(el.value).then(() =>
+    showToast('ok', 'Copié !', 'JSON copié dans le presse-papiers')
+  ).catch(() => showToast('warn', 'Copie échouée', 'Copiez manuellement'));
+}
+
+function copyArduinoCode() {
+  const el = document.getElementById('guide-code-arduino');
+  if (!el) return;
+  navigator.clipboard.writeText(el.innerText).then(() =>
+    showToast('ok', 'Copié !', 'Code Arduino copié')
+  ).catch(() => showToast('warn', 'Copie échouée', 'Copiez manuellement'));
+}
+
+function copyCurlCode() {
+  const base = CONFIG.apiBase || '';
+  const text = `curl -X POST ${base}/iot/gps \\\n  -H "Content-Type: application/json" \\\n  -d '{"api_key":"dawbali_iot_key_2024","id_troupeau":1,"longitude":13.605,"latitude":7.421,"precision_pos":4,"niveau_batterie":82}'`;
+  navigator.clipboard.writeText(text).then(() =>
+    showToast('ok', 'Copié !', 'Commande curl copiée')
+  ).catch(() => showToast('warn', 'Copie échouée', 'Copiez manuellement'));
+}
 
 // ── INIT : restauration de session ────
 (function init() {

@@ -92,6 +92,10 @@
           <span class="nav-icon">⊙</span>
           <span class="nav-text">Paramètres</span>
         </div>
+        <div class="nav-item" data-page="iotguide">
+          <span class="nav-icon">⊕</span>
+          <span class="nav-text">Guide collier IoT</span>
+        </div>
       </div>
     </nav>
 
@@ -587,6 +591,306 @@
           </div>
         </div>
       </div>
+
+      <!-- ════════ GUIDE COLLIER IoT ════════ -->
+      <div class="page" id="iot-guide">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Guide de connexion — Collier IoT</div>
+            <div class="section-sub">Intégrer un dispositif GPS/GSM physique à GeoAlerte-CM</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="window.print()">⎙ Imprimer</button>
+        </div>
+
+        <!-- Étapes en haut -->
+        <div class="grid-5" style="margin-bottom:20px;">
+          <div class="kpi" style="cursor:default;">
+            <div class="kpi-value" style="font-size:22px;color:var(--blue);">1</div>
+            <div class="kpi-label">Matériel requis</div>
+          </div>
+          <div class="kpi" style="cursor:default;">
+            <div class="kpi-value" style="font-size:22px;color:var(--green);">2</div>
+            <div class="kpi-label">Clé API</div>
+          </div>
+          <div class="kpi" style="cursor:default;">
+            <div class="kpi-value" style="font-size:22px;color:var(--orange);">3</div>
+            <div class="kpi-label">Format JSON</div>
+          </div>
+          <div class="kpi" style="cursor:default;">
+            <div class="kpi-value" style="font-size:22px;color:var(--gold2);">4</div>
+            <div class="kpi-label">Code Arduino</div>
+          </div>
+          <div class="kpi" style="cursor:default;">
+            <div class="kpi-value" style="font-size:22px;color:var(--red);">5</div>
+            <div class="kpi-label">Test &amp; mise en prod</div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:16px;">
+
+          <!-- Colonne gauche -->
+          <div>
+
+            <!-- Étape 1 : Matériel -->
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">① Matériel recommandé</div>
+                  <div class="card-sub">Composants pour construire un collier GPS/GSM</div>
+                </div>
+              </div>
+              <div class="card-body" style="padding:0;">
+                <div style="display:grid;gap:1px;background:var(--border);">
+                  <div style="display:flex;align-items:center;gap:12px;padding:12px 18px;background:var(--bg);">
+                    <span style="font-size:20px;">📡</span>
+                    <div>
+                      <div style="font-size:13px;font-weight:600;">Module GPS</div>
+                      <div style="font-size:11px;color:var(--text2);">NEO-6M, NEO-M8N ou équivalent UART — précision 2–5 m</div>
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:12px;padding:12px 18px;background:var(--bg);">
+                    <span style="font-size:20px;">📱</span>
+                    <div>
+                      <div style="font-size:13px;font-weight:600;">Module GSM/GPRS</div>
+                      <div style="font-size:11px;color:var(--text2);">SIM800L, SIM7600 (4G) ou ESP32 avec SIM (LilyGO T-SIM7600) — carte SIM MTN/Orange CM</div>
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:12px;padding:12px 18px;background:var(--bg);">
+                    <span style="font-size:20px;">🔧</span>
+                    <div>
+                      <div style="font-size:13px;font-weight:600;">Microcontrôleur</div>
+                      <div style="font-size:11px;color:var(--text2);">ESP32 (recommandé) ou Arduino Mega + shield GSM séparé</div>
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:12px;padding:12px 18px;background:var(--bg);">
+                    <span style="font-size:20px;">🔋</span>
+                    <div>
+                      <div style="font-size:13px;font-weight:600;">Batterie + panneau solaire</div>
+                      <div style="font-size:11px;color:var(--text2);">LiPo 3 000–5 000 mAh + panneau 5 V/1 W — autonomie ≥ 7 jours</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Étape 2 : Clé API + endpoint -->
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">② Clé API &amp; endpoint</div>
+                  <div class="card-sub">Les deux seules informations à programmer dans le collier</div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="setting-row" style="margin-bottom:12px;">
+                  <div>
+                    <div class="setting-label">URL de l'endpoint GPS</div>
+                    <div class="setting-hint">Le collier envoie une requête HTTP POST à cette adresse</div>
+                  </div>
+                </div>
+                <div style="position:relative;margin-bottom:14px;">
+                  <code id="guide-endpoint" style="display:block;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:12px;font-family:var(--mono);word-break:break-all;color:var(--green);">POST <span id="guide-api-url"></span>/iot/gps</code>
+                  <button onclick="copyGuideCode('guide-endpoint')" style="position:absolute;top:6px;right:8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--text2);">Copier</button>
+                </div>
+                <div class="setting-row">
+                  <div>
+                    <div class="setting-label">Clé API IoT</div>
+                    <div class="setting-hint">À inclure dans chaque requête du collier. Changer dans le fichier <code style="font-size:11px;">.env</code> côté serveur.</div>
+                  </div>
+                </div>
+                <div style="position:relative;margin-bottom:8px;">
+                  <code id="guide-apikey" style="display:block;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:12px;font-family:var(--mono);color:var(--gold2);">dawbali_iot_key_2024</code>
+                  <button onclick="copyGuideCode('guide-apikey')" style="position:absolute;top:6px;right:8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--text2);">Copier</button>
+                </div>
+                <div style="font-size:11px;color:var(--red);margin-top:6px;">⚠ Changer cette clé avant le déploiement en production — variable <code>API_KEY_IOT</code> dans <code>.env</code></div>
+              </div>
+            </div>
+
+            <!-- Étape 3 : Format JSON -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">③ Format de la requête JSON</div>
+                  <div class="card-sub">Corps exact à envoyer en POST</div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div style="position:relative;margin-bottom:14px;">
+                  <pre id="guide-json" style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:14px;font-size:11px;font-family:var(--mono);overflow-x:auto;margin:0;line-height:1.7;color:var(--text);">{
+  <span style="color:var(--gold2);">"api_key"</span>:        <span style="color:var(--green);">"dawbali_iot_key_2024"</span>,
+  <span style="color:var(--gold2);">"id_troupeau"</span>:    <span style="color:var(--blue);">1</span>,
+  <span style="color:var(--gold2);">"longitude"</span>:      <span style="color:var(--blue);">13.602145</span>,
+  <span style="color:var(--gold2);">"latitude"</span>:       <span style="color:var(--blue);">7.418320</span>,
+  <span style="color:var(--gold2);">"precision_pos"</span>:  <span style="color:var(--blue);">4.5</span>,
+  <span style="color:var(--gold2);">"direction"</span>:      <span style="color:var(--blue);">135</span>,
+  <span style="color:var(--gold2);">"niveau_batterie"</span>: <span style="color:var(--blue);">87</span>
+}</pre>
+                  <button onclick="copyRawCode('guide-json-raw')" style="position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--text2);">Copier</button>
+                  <textarea id="guide-json-raw" style="position:absolute;opacity:0;pointer-events:none;height:0;">{"api_key":"dawbali_iot_key_2024","id_troupeau":1,"longitude":13.602145,"latitude":7.418320,"precision_pos":4.5,"direction":135,"niveau_batterie":87}</textarea>
+                </div>
+                <table class="tbl" style="font-size:11px;">
+                  <thead>
+                    <tr><th>Champ</th><th>Type</th><th>Requis</th><th>Description</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td class="mono">api_key</td><td>string</td><td><span class="pill danger" style="font-size:10px;">oui</span></td><td>Clé d'authentification IoT</td></tr>
+                    <tr><td class="mono">id_troupeau</td><td>integer</td><td><span class="pill danger" style="font-size:10px;">oui</span></td><td>ID du troupeau dans la base</td></tr>
+                    <tr><td class="mono">longitude</td><td>float</td><td><span class="pill danger" style="font-size:10px;">oui</span></td><td>-180 à +180</td></tr>
+                    <tr><td class="mono">latitude</td><td>float</td><td><span class="pill danger" style="font-size:10px;">oui</span></td><td>-90 à +90</td></tr>
+                    <tr><td class="mono">precision_pos</td><td>float</td><td><span class="pill ok" style="font-size:10px;">non</span></td><td>Précision en mètres</td></tr>
+                    <tr><td class="mono">direction</td><td>float</td><td><span class="pill ok" style="font-size:10px;">non</span></td><td>Cap en degrés (0-360)</td></tr>
+                    <tr><td class="mono">niveau_batterie</td><td>integer</td><td><span class="pill ok" style="font-size:10px;">non</span></td><td>Niveau batterie 0-100 %</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div><!-- /col gauche -->
+
+          <!-- Colonne droite -->
+          <div>
+
+            <!-- Étape 4 : Code Arduino/ESP32 -->
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">④ Code ESP32 (Arduino IDE)</div>
+                  <div class="card-sub">Exemple complet à adapter — bibliothèques : TinyGPS++, HTTPClient</div>
+                </div>
+              </div>
+              <div class="card-body" style="padding-top:8px;">
+                <div style="position:relative;">
+                  <pre id="guide-code-arduino" style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:14px;font-size:10.5px;font-family:var(--mono);overflow-x:auto;margin:0;line-height:1.65;color:var(--text);max-height:420px;overflow-y:auto;"><span style="color:var(--text3);">// ── Bibliothèques ──────────────────</span>
+<span style="color:var(--blue);">#include</span> &lt;WiFi.h&gt;
+<span style="color:var(--blue);">#include</span> &lt;HTTPClient.h&gt;
+<span style="color:var(--blue);">#include</span> &lt;TinyGPS++.h&gt;
+
+<span style="color:var(--text3);">// ── Configuration ──────────────────</span>
+<span style="color:var(--blue);">const char*</span> WIFI_SSID  = <span style="color:var(--green);">"VOTRE_WIFI"</span>;
+<span style="color:var(--blue);">const char*</span> WIFI_PASS  = <span style="color:var(--green);">"MOT_DE_PASSE"</span>;
+<span style="color:var(--blue);">const char*</span> SERVER_URL = <span style="color:var(--green);">"https://VOTRE_BACKEND/api/iot/gps"</span>;
+<span style="color:var(--blue);">const char*</span> API_KEY    = <span style="color:var(--green);">"dawbali_iot_key_2024"</span>;
+<span style="color:var(--blue);">const int</span>   ID_TROUPEAU = <span style="color:var(--blue);">1</span>;
+<span style="color:var(--blue);">const long</span>  INTERVAL_MS = <span style="color:var(--blue);">60000</span>; <span style="color:var(--text3);">// 1 envoi / minute</span>
+
+<span style="color:var(--text3);">// ── GPS : Serial2 (RX=16, TX=17) ──</span>
+TinyGPSPlus gps;
+HardwareSerial gpsSerial(<span style="color:var(--blue);">2</span>);
+
+<span style="color:var(--blue);">void</span> setup() {
+  Serial.begin(<span style="color:var(--blue);">115200</span>);
+  gpsSerial.begin(<span style="color:var(--blue);">9600</span>, SERIAL_8N1, <span style="color:var(--blue);">16</span>, <span style="color:var(--blue);">17</span>);
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  <span style="color:var(--blue);">while</span> (WiFi.status() != WL_CONNECTED) {
+    delay(<span style="color:var(--blue);">500</span>); Serial.print(<span style="color:var(--green);">"."</span>);
+  }
+  Serial.println(<span style="color:var(--green);">"\nWiFi connecté"</span>);
+}
+
+<span style="color:var(--blue);">unsigned long</span> lastSend = <span style="color:var(--blue);">0</span>;
+
+<span style="color:var(--blue);">void</span> loop() {
+  <span style="color:var(--text3);">// Lire le GPS</span>
+  <span style="color:var(--blue);">while</span> (gpsSerial.available())
+    gps.encode(gpsSerial.read());
+
+  <span style="color:var(--blue);">if</span> (millis() - lastSend &gt;= INTERVAL_MS
+      &amp;&amp; gps.location.isValid()) {
+    sendPosition(
+      gps.location.lng(),
+      gps.location.lat(),
+      gps.hdop.value() / <span style="color:var(--blue);">100.0</span>,
+      gps.course.deg(),
+      readBatteryPercent()
+    );
+    lastSend = millis();
+  }
+}
+
+<span style="color:var(--blue);">void</span> sendPosition(<span style="color:var(--blue);">double</span> lon, <span style="color:var(--blue);">double</span> lat,
+                   <span style="color:var(--blue);">float</span> hdop, <span style="color:var(--blue);">double</span> course,
+                   <span style="color:var(--blue);">int</span> batterie) {
+  HTTPClient http;
+  http.begin(SERVER_URL);
+  http.addHeader(<span style="color:var(--green);">"Content-Type"</span>, <span style="color:var(--green);">"application/json"</span>);
+  String body = <span style="color:var(--green);">"{\"api_key\":\""</span> + String(API_KEY)
+    + <span style="color:var(--green);">"\",\"id_troupeau\":"</span> + ID_TROUPEAU
+    + <span style="color:var(--green);">",\"longitude\":"</span>    + String(lon, <span style="color:var(--blue);">6</span>)
+    + <span style="color:var(--green);">",\"latitude\":"</span>     + String(lat, <span style="color:var(--blue);">6</span>)
+    + <span style="color:var(--green);">",\"precision_pos\":"</span>+ String(hdop, <span style="color:var(--blue);">1</span>)
+    + <span style="color:var(--green);">",\"direction\":"</span>    + String(course, <span style="color:var(--blue);">0</span>)
+    + <span style="color:var(--green);">",\"niveau_batterie\":"</span>+ batterie + <span style="color:var(--green);">"}"</span>;
+  <span style="color:var(--blue);">int</span> code = http.POST(body);
+  http.end();
+  Serial.println(code == <span style="color:var(--blue);">200</span> ? <span style="color:var(--green);">"✓ Envoyé"</span>
+                             : <span style="color:var(--green);">"✗ Err "</span> + String(code));
+}
+
+<span style="color:var(--blue);">int</span> readBatteryPercent() {
+  <span style="color:var(--text3);">// ADC sur GPIO34 (diviseur résistif 100k/47k)</span>
+  <span style="color:var(--blue);">int</span> raw = analogRead(<span style="color:var(--blue);">34</span>);
+  <span style="color:var(--blue);">float</span> v = raw * <span style="color:var(--blue);">3.3f</span> / <span style="color:var(--blue);">4095.0f</span> * <span style="color:var(--blue);">3.14f</span>;
+  <span style="color:var(--blue);">return</span> constrain((v - <span style="color:var(--blue);">3.0f</span>) / (<span style="color:var(--blue);">4.2f</span> - <span style="color:var(--blue);">3.0f</span>) * <span style="color:var(--blue);">100</span>, <span style="color:var(--blue);">0</span>, <span style="color:var(--blue);">100</span>);
+}</pre>
+                  <button onclick="copyArduinoCode()" style="position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--text2);">Copier</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Étape 5 : Test curl + mise en prod -->
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">⑤ Tester sans collier (curl)</div>
+                  <div class="card-sub">Simuler un envoi depuis un terminal Linux/Mac/Windows</div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div style="position:relative;margin-bottom:10px;">
+                  <pre id="guide-curl" style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px 14px;font-size:11px;font-family:var(--mono);overflow-x:auto;margin:0;line-height:1.6;color:var(--text);">curl -X POST <span id="guide-curl-url" style="color:var(--green);"></span>/iot/gps \
+  -H <span style="color:var(--gold2);">"Content-Type: application/json"</span> \
+  -d <span style="color:var(--green);">'{
+    "api_key": "dawbali_iot_key_2024",
+    "id_troupeau": 1,
+    "longitude": 13.605,
+    "latitude": 7.421,
+    "precision_pos": 4,
+    "niveau_batterie": 82
+  }'</span></pre>
+                  <button onclick="copyCurlCode()" style="position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--text2);">Copier</button>
+                </div>
+                <div style="font-size:11px;color:var(--text2);">Réponse attendue : <code style="font-size:11px;color:var(--green);">{"success":true,"message":"Position enregistrée",…}</code></div>
+              </div>
+            </div>
+
+            <!-- Conseils sécurité & fréquence -->
+            <div class="card">
+              <div class="card-header"><div class="card-title">Conseils mise en production</div></div>
+              <div class="card-body" style="padding:0;">
+                <div style="display:grid;gap:1px;background:var(--border);">
+                  <div style="padding:12px 18px;background:var(--bg);">
+                    <div style="font-size:12px;font-weight:600;margin-bottom:3px;color:var(--red);">🔑 Sécurité de la clé API</div>
+                    <div style="font-size:11px;color:var(--text2);">Changer <code>API_KEY_IOT</code> dans le fichier <code>.env</code> du serveur. La clé est en clair dans le firmware — ne jamais la partager. En cas de compromission, changer uniquement côté serveur.</div>
+                  </div>
+                  <div style="padding:12px 18px;background:var(--bg);">
+                    <div style="font-size:12px;font-weight:600;margin-bottom:3px;color:var(--orange);">📶 Fréquence d'envoi recommandée</div>
+                    <div style="font-size:11px;color:var(--text2);">Transhumance active : 1 envoi / 5 min. Pâturage fixe : 1 envoi / 30 min. Nuit / repos : 1 envoi / heure. Adapter selon la consommation batterie.</div>
+                  </div>
+                  <div style="padding:12px 18px;background:var(--bg);">
+                    <div style="font-size:12px;font-weight:600;margin-bottom:3px;color:var(--blue);">📡 Couverture réseau au Cameroun</div>
+                    <div style="font-size:11px;color:var(--text2);">MTN CM et Orange CM couvrent les axes principaux de l'Adamaoua. En zone blanche, stocker les positions en mémoire flash et les transmettre par lot dès retour réseau.</div>
+                  </div>
+                  <div style="padding:12px 18px;background:var(--bg);">
+                    <div style="font-size:12px;font-weight:600;margin-bottom:3px;color:var(--green);">✓ Vérifier l'intégration</div>
+                    <div style="font-size:11px;color:var(--text2);">Après le premier envoi réel : aller sur la page <b>Carte en direct</b> → le marqueur GPS du troupeau doit apparaître. Si le troupeau approche d'une zone, une alerte s'affiche automatiquement.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /col droite -->
+        </div><!-- /grid-2 -->
+      </div><!-- /#iot-guide -->
 
     </div><!-- /content -->
   </div><!-- /main -->

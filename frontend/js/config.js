@@ -49,6 +49,7 @@ const PAGE_META = {
   zones:     { title: 'Zones protégées', path: 'Géorepérage',               id: 'zones'     },
   reports:   { title: 'Rapports',        path: 'Statistiques & Analyse',    id: 'reports'   },
   settings:  { title: 'Paramètres',      path: 'Configuration système',     id: 'settings'  },
+  iotguide:  { title: 'Guide collier IoT', path: 'Connexion & intégration', id: 'iot-guide' },
 };
 
 /* ════════════════════════════════════════
