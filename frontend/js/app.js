@@ -68,11 +68,11 @@ const _origShowPage = showPage;
 // (défini après, voir ci-dessous)
 
 function _fillGuideUrls() {
-  const base = CONFIG.apiBase || '';
-  const el1  = document.getElementById('guide-api-url');
-  const el2  = document.getElementById('guide-curl-url');
-  if (el1) el1.textContent = base;
-  if (el2) el2.textContent = base;
+  const base = CONFIG.apiBase || 'https://dawbali-backend.onrender.com/api';
+  ['guide-api-url', 'guide-curl-url', 'guide-arduino-url'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = base;
+  });
 }
 
 function copyGuideCode(elementId) {
