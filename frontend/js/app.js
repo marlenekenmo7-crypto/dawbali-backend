@@ -71,6 +71,7 @@ document.getElementById('login-password')?.addEventListener('keydown', e => {
       S.user  = JSON.parse(savedUser);
       updateUserUI();
       refreshAll();
+      connectSSE(S.token);
       setTimeout(() => showToast('ok', 'GeoAlerte-CM — Système actif', `Session restaurée · ${S.user.nom}`), 500);
     } catch (_) {
       setTimeout(showLoginModal, 300);

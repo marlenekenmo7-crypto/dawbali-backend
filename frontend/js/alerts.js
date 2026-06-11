@@ -111,6 +111,31 @@ function renderAlerts(alerts) {
   }
 }
 
+function exportAlertsCSV() {
+  if (!S.token) { showToast('warn', 'Non connecté', 'Connectez-vous pour exporter'); return; }
+  const url = `${CONFIG.apiBase}/alertes/export/csv`;
+  const a   = document.createElement('a');
+  a.href = url;
+  a.setAttribute('download', '');
+
+  // On passe le token en ajoutant temporairement un header via fetch + blob
+  showToast('info', 'Export CSV', 'Téléchargement en cours…');
+  fetch(url, { headers: { Authorization: `Bearer ${S.token}` } })
+    .then(r => {
+      if (!r.ok) throw new Error('Erreur serveur');
+      return r.blob();
+    })
+    .then(blob => {
+      const link = document.createElement('a');
+      link.href  = URL.createObjectURL(blob);
+      const date = new Date().toISOString().slice(0, 10);
+      link.download = `alertes_${date}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    })
+    .catch(() => showToast('danger', 'Export échoué', 'Vérifiez la connexion au serveur'));
+}
+
 async function resolveAlert(id, ev) {
   if (ev) ev.stopPropagation();
   const { ok } = await api(`/alertes/${id}`, 'PATCH', { status: 'resolved' });

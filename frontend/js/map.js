@@ -138,3 +138,40 @@ function centerMap() {
   const panel = document.getElementById('map-herd-panel');
   if (panel) panel.style.display = 'none';
 }
+
+async function simulateHerd() {
+  const herds = S.allHerds;
+  if (!herds.length) {
+    showToast('warn', 'Simulation impossible', 'Aucun troupeau disponible');
+    return;
+  }
+
+  // Si un troupeau est sélectionné sur la carte, l'utiliser ; sinon prendre le premier
+  const herd = S.selectedHerd || herds[0];
+  const btn  = document.getElementById('btn-simulate');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Simulation…'; }
+
+  const { ok, data } = await api(`/iot/simulate/${herd.id_troupeau}`, 'POST');
+
+  if (btn) { btn.disabled = false; btn.textContent = '▶ Simuler'; }
+
+  if (!ok) {
+    showToast('danger', 'Erreur simulation', data.error || 'Échec');
+    return;
+  }
+
+  showToast('ok', 'Simulation réussie', `${data.message} · ${herd.nom_troupeau}`);
+
+  // Rafraîchir carte + alertes après un court délai (le géofencing est async côté serveur)
+  setTimeout(async () => {
+    await updateMapPositions();
+    if (data.waypoints?.length >= 2) {
+      const pts = data.waypoints.map(w => [w.lat, w.lon]);
+      if (S.trajLayer) S.map.removeLayer(S.trajLayer);
+      S.trajLayer = L.polyline(pts, { color: '#F0A030', weight: 3, opacity: .85, dashArray: '8,4' }).addTo(S.map);
+      S.map.fitBounds(S.trajLayer.getBounds(), { padding: [60, 60] });
+    }
+  }, 800);
+
+  setTimeout(() => fetchAlerts(), 1500);
+}

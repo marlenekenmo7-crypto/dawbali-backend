@@ -94,14 +94,21 @@ async function initDb() {
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS notification_eleveur (
-        id_notif_elev SERIAL PRIMARY KEY,
-        id_alerte     INTEGER REFERENCES alerte(id_alerte) ON DELETE CASCADE,
-        id_eleveur    INTEGER REFERENCES eleveur(id_eleveur) ON DELETE CASCADE,
-        canal         VARCHAR(20) DEFAULT 'sms',
-        statut_envoi  VARCHAR(20) DEFAULT 'envoye',
-        envoye_a      TIMESTAMP DEFAULT NOW()
+        id_notif_elev   SERIAL PRIMARY KEY,
+        id_alerte       INTEGER REFERENCES alerte(id_alerte) ON DELETE CASCADE,
+        id_eleveur      INTEGER REFERENCES eleveur(id_eleveur) ON DELETE CASCADE,
+        canal           VARCHAR(20)  DEFAULT 'sms',
+        contenu_message TEXT,
+        statut_envoi    VARCHAR(20)  DEFAULT 'envoye',
+        nb_tentatives   INTEGER      DEFAULT 1,
+        date_envoi      TIMESTAMP    DEFAULT NOW(),
+        envoye_a        TIMESTAMP    DEFAULT NOW()
       )
     `);
+    // Migration douce : ajouter les colonnes si la table existait déjà sans elles
+    await pool.query(`ALTER TABLE notification_eleveur ADD COLUMN IF NOT EXISTS contenu_message TEXT`);
+    await pool.query(`ALTER TABLE notification_eleveur ADD COLUMN IF NOT EXISTS nb_tentatives INTEGER DEFAULT 1`);
+    await pool.query(`ALTER TABLE notification_eleveur ADD COLUMN IF NOT EXISTS date_envoi TIMESTAMP DEFAULT NOW()`);
 
     // Index géospatiaux
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_zones_geom        ON zones          USING GIST (forme_geographique)`);

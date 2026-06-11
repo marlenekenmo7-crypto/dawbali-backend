@@ -5,6 +5,7 @@ const alerteController = require('../controllers/alerteController');
 const { verifyToken } = require('../middleware/auth');
 
 router.get('/',                        verifyToken, alerteController.getAllAlertes);
+router.get('/export/csv',              verifyToken, alerteController.exportCSV);
 router.get('/zone/:id_zone',           verifyToken, alerteController.getAlertesByZone);
 router.get('/zone/:id_zone/recentes',  verifyToken, alerteController.getRecentAlertesByZone);
 router.get('/zone/:id_zone/stats',     verifyToken, alerteController.getZoneAlertStats);

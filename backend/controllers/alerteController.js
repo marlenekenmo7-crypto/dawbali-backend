@@ -90,17 +90,17 @@ const alerteController = {
       }
       
       const result = await pool.query(
-        `SELECT a.*, 
-                t.nom_troupeau, 
+        `SELECT a.*,
+                t.nom_troupeau,
                 e.nom_eleveur,
                 EXTRACT(EPOCH FROM (NOW() - a.created_at)) / 60 as minutes_ecoulees
          FROM alerte a
          JOIN troupeau t ON a.id_troupeau = t.id_troupeau
          JOIN eleveur e ON t.id_eleveur = e.id_eleveur
-         WHERE a.id_zone = $1 
-         AND a.created_at > NOW() - INTERVAL '${heures} hours'
+         WHERE a.id_zone = $1
+         AND a.created_at > NOW() - ($2 * INTERVAL '1 hour')
          ORDER BY a.created_at DESC`,
-        [id_zone]
+        [id_zone, heures]
       );
       
       res.json({ 
@@ -112,6 +112,65 @@ const alerteController = {
       });
     } catch (error) {
       console.error('Erreur getRecentAlertesByZone:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  // Export CSV de toutes les alertes
+  async exportCSV(req, res) {
+    try {
+      let rows;
+      if (req.user.role === 'eleveur') {
+        const r = await pool.query(`
+          SELECT a.id_alerte, a.type_alerte, a.message, a.distance_metres,
+                 a.status, a.created_at, a.resolved_at,
+                 t.nom_troupeau, z.nom_zone, z.type_zone, e.nom_eleveur, e.telephone
+          FROM alerte a
+          LEFT JOIN troupeau t ON a.id_troupeau = t.id_troupeau
+          LEFT JOIN zones z    ON a.id_zone     = z.id_zone
+          LEFT JOIN eleveur e  ON t.id_eleveur  = e.id_eleveur
+          WHERE t.id_eleveur = $1
+          ORDER BY a.created_at DESC
+        `, [req.user.id]);
+        rows = r.rows;
+      } else {
+        const r = await pool.query(`
+          SELECT a.id_alerte, a.type_alerte, a.message, a.distance_metres,
+                 a.status, a.created_at, a.resolved_at,
+                 t.nom_troupeau, z.nom_zone, z.type_zone, e.nom_eleveur, e.telephone
+          FROM alerte a
+          LEFT JOIN troupeau t ON a.id_troupeau = t.id_troupeau
+          LEFT JOIN zones z    ON a.id_zone     = z.id_zone
+          LEFT JOIN eleveur e  ON t.id_eleveur  = e.id_eleveur
+          ORDER BY a.created_at DESC
+        `);
+        rows = r.rows;
+      }
+
+      const escape = v => {
+        if (v === null || v === undefined) return '';
+        const s = String(v).replace(/"/g, '""');
+        return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s}"` : s;
+      };
+
+      const headers = ['ID','Type','Message','Distance (m)','Statut','Date création','Date résolution',
+                       'Troupeau','Zone','Type zone','Éleveur','Téléphone'];
+      const lines = [headers.join(',')];
+      for (const row of rows) {
+        lines.push([
+          row.id_alerte, row.type_alerte, row.message, row.distance_metres,
+          row.status, row.created_at, row.resolved_at,
+          row.nom_troupeau, row.nom_zone, row.type_zone, row.nom_eleveur, row.telephone
+        ].map(escape).join(','));
+      }
+
+      const csv = '﻿' + lines.join('\r\n'); // BOM UTF-8 pour Excel
+      const filename = `alertes_${new Date().toISOString().slice(0,10)}.csv`;
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(csv);
+    } catch (error) {
+      console.error('Erreur exportCSV:', error);
       res.status(500).json({ success: false, error: error.message });
     }
   },

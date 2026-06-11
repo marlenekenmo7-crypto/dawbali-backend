@@ -16,6 +16,7 @@ async function login(telephone, password, role) {
     updateUserUI();
     closeLoginModal();
     refreshAll();
+    connectSSE(S.token);
     showToast('ok', 'Connexion réussie', `Bienvenue, ${S.user.nom}`);
     return true;
   }
@@ -35,6 +36,7 @@ function logout() {
   document.getElementById('user-role').textContent   = 'Cliquez pour vous connecter';
   document.getElementById('logout-icon').style.display = 'none';
   document.documentElement.removeAttribute('data-role');
+  disconnectSSE();
   showToast('info', 'Déconnexion', 'Session terminée');
   setTimeout(showLoginModal, 400);
 }
