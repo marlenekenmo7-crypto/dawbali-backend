@@ -2,7 +2,7 @@
    CONFIG — paramètres persistés
    ════════════════════════════════════════ */
 const CONFIG = {
-  get apiBase()      { return localStorage.getItem('apiBase')      || 'https://geoalerte-cm.onrender.com/api'; },
+  get apiBase()      { return localStorage.getItem('apiBase')      || 'https://dawbali-backend.onrender.com/api'; },
   get batThreshold() { return parseInt(localStorage.getItem('batThreshold') || '20'); },
   get mapInterval()  { return parseInt(localStorage.getItem('mapInterval')  || '30'); },
 };
